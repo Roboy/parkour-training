@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot name="biped">
+    <link name="base">
+        <inertial>
+            <mass value="1.0" />
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box size="0.2 0.65 0.05" />
+            </geometry>
+        </visual>
+        <collision name="collision">
+            <geometry>
+                <box size="0.2 0.65 0.05" />
+            </geometry>
+        </collision>
+    </link>
+
+    <link name="leg_right_1">
+        <inertial>
+            <mass value="1.0" />
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box size="0.1 0.1 0.4" />
+            </geometry>
+            <origin xyz="0 0 -0.2"/>
+        </visual>
+        <collision name="collision">
+            <geometry>
+                <box size="0.1 0.1 0.4" />
+            </geometry>
+            <origin xyz="0 0 -0.2"/>
+        </collision>
+    </link>
+    
+    <link name="leg_left_1">
+        <inertial>
+            <mass value="1.0" />
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box size="0.1 0.1 0.4" />
+            </geometry>
+            <origin xyz="0 0 -0.2"/>
+        </visual>
+        <collision name="collision">
+            <geometry>
+                <box size="0.1 0.1 0.4" />
+            </geometry>
+            <origin xyz="0 0 -0.2"/>
+        </collision>
+    </link>
+
+    <link name="leg_right_2">
+        <inertial>
+            <mass value="1.0" />
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box size="0.1 0.1 0.4" />
+            </geometry>
+            <origin xyz="0 0 -0.2"/>
+        </visual>
+        <collision name="collision">
+            <geometry>
+                <box size="0.1 0.1 0.4" />
+            </geometry>
+            <origin xyz="0 0 -0.2"/>
+        </collision>
+    </link>
+   
+    <link name="leg_left_2">
+        <inertial>
+            <mass value="1.0" />
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box size="0.1 0.1 0.4" />
+            </geometry>
+            <origin xyz="0 0 -0.2"/>
+        </visual>
+        <collision name="collision">
+            <geometry>
+                <box size="0.1 0.1 0.4" />
+            </geometry>
+            <origin xyz="0 0 -0.2"/>
+        </collision>
+    </link>
+
+    <link name="feet_right">
+        <inertial>
+            <mass value="1.0" />
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box size="0.3 0.3 0.05" />
+            </geometry>
+        </visual>
+        <collision name="collision">
+            <geometry>
+                <box size="0.3 0.3 0.05" />
+            </geometry>
+        </collision>
+    </link>
+
+    <link name="feet_left">
+        <inertial>
+            <mass value="1.0" />
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box size="0.3 0.3 0.05" />
+            </geometry>
+        </visual>
+        <collision name="collision">
+            <geometry>
+                <box size="0.3 0.3 0.05" />
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="right_hip" type="continuous">
+        <origin xyz="0 0.25 0" rpy="0 0 0" />
+         <axis xyz = "0 1 0"/>
+        <parent link="base" />
+        <child link="leg_right_1" />
+    </joint>
+
+    <joint name="left_hip" type="continuous">
+        <origin xyz="0 -0.25 0" rpy="0 0 0" />
+         <axis xyz = "0 1 0"/>
+        <parent link="base" />
+        <child link="leg_left_1" />
+    </joint>
+
+    <joint name="right_knee" type="revolute">
+        <origin xyz="0 0 -0.4" rpy="0 0 0" />
+        <axis xyz = "0 1 0"/>
+        <limit upper = "1" effort = "1" velocity = "1"/>
+        <parent link="leg_right_1" />
+        <child link="leg_right_2" />
+    </joint>
+
+    <joint name="left_knee" type="revolute">
+        <origin xyz="0 0 -0.4" rpy="0 0 0" />
+        <axis xyz = "0 1 0"/>
+        <limit upper = "1" effort = "1" velocity = "1"/>
+        <parent link="leg_left_1" />
+        <child link="leg_left_2" />
+    </joint>
+
+    <joint name="right_ankle" type="continuous">
+        <origin xyz="0 0 -0.4" rpy="0 0 0" />
+        <axis xyz = "0 1 0"/>
+        <parent link="leg_right_2" />
+        <child link="feet_right" />
+    </joint>
+
+    <joint name="left_ankle" type="continuous">
+        <origin xyz="0 0 -0.4" rpy="0 0 0" />
+        <axis xyz = "0 1 0"/>
+        <parent link="leg_left_2" />
+        <child link="feet_left" />
+    </joint>
+
+    
+</robot>
