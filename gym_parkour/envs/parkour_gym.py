@@ -1,25 +1,18 @@
-import numpy as np
-import gym
-from gym import spaces
-from gym_parkour.envs.bullet_environment import BulletEnvironment
-from gym_parkour.envs.robot_bases import MJCFBasedRobot
-import pybullet as p
+from pybulletgym.envs.roboschool.envs.locomotion.walker_base_env import WalkerBaseBulletEnv
+from pybulletgym.envs.roboschool.robots.locomotors import Humanoid
+from pybulletgym.envs.roboschool.robots.locomotors import HumanoidFlagrun, HumanoidFlagrunHarder
 
-class ParkourGym(gym.Env):
-    def __init__(self, *args, **kwargs):
-        physics_client = p.connect(p.GUI)
-        robot_model_path = '/home/alex/parkour-training/gym_parkour/envs/assets/humanoid.xml'
-        p.setGravity(0, 0, -10)
-        self.robot = MJCFBasedRobot(robot_model_path, robot_name='', action_dim=21, obs_dim=21)
-        self.robot.reset(p)
-        action_low = np.array([-1, -1, -1])
-        observation_low = np.array([-2, -2, -2])
-        self.action_space = spaces.Box(action_low, -action_low)
-        self.observation_space = spaces.Box(observation_low, -observation_low)
 
-    def step(self, action):
-        obs = 0
-        pass
+class ParkourGym(WalkerBaseBulletEnv):
+    def __init__(self, render=False):
+        self.robot = HumanoidFlagrun()
+        WalkerBaseBulletEnv.__init__(self, self.robot, render=render)
+        WalkerBaseBulletEnv.walk_target_x = 100
+        WalkerBaseBulletEnv.walk_target_y = 0
+        self.electricity_cost = 4.25 * WalkerBaseBulletEnv.electricity_cost
+        self.stall_torque_cost = 4.25 * WalkerBaseBulletEnv.stall_torque_cost
 
-    def reset(self):
-        return [0, 0, 0]
+    # def create_single_player_scene(self, bullet_client):   # useless ?
+    #     s = WalkerBaseBulletEnv.create_single_player_scene(self, bullet_client)
+    #     s.zero_at_running_strip_start_line = False
+    #     return s
