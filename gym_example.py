@@ -12,6 +12,4 @@ while True:
         obs, reward, done, info = env.step(action)
         print(obs)
         env.render(mode='human')
-        time.sleep(0.52)
-
-time.sleep(10)
+        time.sleep(0.02)
