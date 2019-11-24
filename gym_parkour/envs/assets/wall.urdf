@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<robot name="block_2">
+<link name="table">
+  <visual>
+    <geometry>
+      <box size="0.1 4.0 3.45"/>
+    </geometry>
+  </visual>
+  <collision>
+    <geometry>
+      <box size="0.1 4.0 3.45"/>
+    </geometry>
+  </collision>
+</link>
+</robot>
