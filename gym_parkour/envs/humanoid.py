@@ -2,22 +2,26 @@ import os
 import pybullet
 from pybulletgym.envs.roboschool.robots.locomotors.walker_base import WalkerBase
 from pybulletgym.envs.roboschool.robots.robot_bases import MJCFBasedRobot
+from gym_parkour.envs.parkour_robot import ParkourRobot
 import numpy as np
 
 
-class Humanoid(WalkerBase, MJCFBasedRobot):
+class Humanoid(ParkourRobot, MJCFBasedRobot):
     self_collision = True
     foot_list = ["right_foot", "left_foot"]  # "left_hand", "right_hand"
 
     def __init__(self, random_yaw = False, random_lean=False):
-        WalkerBase.__init__(self, power=0.41)
+        ParkourRobot.__init__(self)
         MJCFBasedRobot.__init__(self, 'humanoid_symmetric.xml', 'torso', action_dim=17, obs_dim=44)
         # 17 joints, 4 of them important for walking (hip, knee), others may as well be turned off, 17/4 = 4.25
         self.random_yaw = random_yaw
         self.random_lean = random_lean
+        self.flag = None
+        self.target_index = 0
+        self.targets = [(0, 0), (18, 0.0), (27, -2), (37, 3), (45, -3)]
 
     def robot_specific_reset(self, bullet_client):
-        WalkerBase.robot_specific_reset(self, bullet_client)
+        ParkourRobot.robot_specific_reset(self, bullet_client)
         self.motor_names  = ["abdomen_z", "abdomen_y", "abdomen_x"]
         self.motor_power  = [100, 100, 100]
         self.motor_names += ["right_hip_x", "right_hip_z", "right_hip_y", "right_knee"]
