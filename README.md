@@ -1,4 +1,5 @@
 # parkour-training
+![alt text](HumanoidWithTrack.png "Humanoid in front of challenge track")
 
 
 ## Installing gym_parkour
