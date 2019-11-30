@@ -13,6 +13,8 @@ class ParkourGym(BaseBulletEnv):
         self.robot = Humanoid(target_position_xy=self.target_position_xy)
         BaseBulletEnv.__init__(self, self.robot, render)
         self.saved_state_id = None
+        self.action_space = self.robot.action_space
+        self.observation_space = self.robot.observation_space
 
     # Overwrite BaseBulletEnv
     def create_single_player_scene(self, bullet_client):
