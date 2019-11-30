@@ -39,19 +39,7 @@ class ParkourRobot(XmlBasedRobot, ABC):
         # necessary method for BulletBaseEnv
         return 0
 
+    @abstractmethod
     def reset(self, bullet_client):
-        full_path = os.path.join(os.path.dirname(__file__), "assets", self.model_xml)
-
-        self._p = bullet_client
-        # print("Created bullet_client with id=", self._p._client)
-        if self.doneLoading == 0:
-            self.ordered_joints = []
-            self.doneLoading = 1
-            if self.self_collision:
-                self.objects = self._p.loadMJCF(full_path,
-                                                flags=pybullet.URDF_USE_SELF_COLLISION | pybullet.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS)
-                self.parts, self.jdict, self.ordered_joints, self.robot_body = self.addToScene(self._p, self.objects)
-            else:
-                self.objects = self._p.loadMJCF(full_path)
-                self.parts, self.jdict, self.ordered_joints, self.robot_body = self.addToScene(self._p, self.objects)
-        self.robot_specific_reset(self._p)
+        pass
+        
