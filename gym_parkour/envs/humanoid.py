@@ -16,12 +16,12 @@ class Humanoid(ParkourRobot, MJCFBasedRobot):
         # 17 joints, 4 of them important for walking (hip, knee), others may as well be turned off, 17/4 = 4.25
         self.random_yaw = random_yaw
         self.random_lean = random_lean
-        self.flag = None
-        self.target_index = 0
-        self.targets = [(0, 0), (18, 0.0), (27, -2), (37, 3), (45, -3)]
 
+    # overwrite ParkourRobot
     def robot_specific_reset(self, bullet_client):
-        ParkourRobot.robot_specific_reset(self, bullet_client)
+        # ParkourRobot.robot_specific_reset(self, bullet_client)
+        self.feet = [self.parts[f] for f in self.foot_list]
+        self.feet_contact = np.array([0.0 for f in self.foot_list], dtype=np.float32)
         self.motor_names = ["abdomen_z", "abdomen_y", "abdomen_x"]
         self.motor_power = [100, 100, 100]
         self.motor_names += ["right_hip_x", "right_hip_z", "right_hip_y", "right_knee"]
@@ -62,3 +62,47 @@ class Humanoid(ParkourRobot, MJCFBasedRobot):
 
     def alive_bonus(self, z, pitch):
         return +2 if z > 0.78 else -1  # 2 here because 17 joints produce a lot of electricity cost just from policy noise, living must be better than dying
+
+    # overwrite ParkourRobot
+    def calc_state(self, target_position_xy):
+        j = np.array([j.current_relative_position() for j in self.ordered_joints], dtype=np.float32).flatten()
+        # even elements [0::2] position, scaled to -1..+1 between limits
+        # odd elements  [1::2] angular speed, scaled to show -1..+1
+        self.joint_speeds = j[1::2]
+        self.joints_at_limit = np.count_nonzero(np.abs(j[0::2]) > 0.99)
+
+        body_pose = self.robot_body.pose()
+        parts_xyz = np.array([p.pose().xyz() for p in self.parts.values()]).flatten()
+        self.body_xyz = (
+            parts_xyz[0::3].mean(), parts_xyz[1::3].mean(),
+            body_pose.xyz()[2])  # torso z is more informative than mean z
+        self.body_rpy = body_pose.rpy()
+        z = self.body_xyz[2]
+        if self.initial_z is None:
+            self.initial_z = z
+        r, p, yaw = self.body_rpy
+        self.walk_target_theta = np.arctan2(target_position_xy[1] - self.body_xyz[1],
+                                            target_position_xy[0] - self.body_xyz[0])
+        angle_to_target = self.walk_target_theta - yaw
+
+        rot_speed = np.array(
+            [[np.cos(-yaw), -np.sin(-yaw), 0],
+             [np.sin(-yaw), np.cos(-yaw), 0],
+             [0, 0, 1]]
+        )
+        vx, vy, vz = np.dot(rot_speed, self.robot_body.speed())  # rotate speed back to body point of view
+
+        more = np.array([z - self.initial_z,
+                         np.sin(angle_to_target), np.cos(angle_to_target),
+                         0.3 * vx, 0.3 * vy, 0.3 * vz,
+                         # 0.3 is just scaling typical speed into -1..+1, no physical sense here
+                         r, p], dtype=np.float32)
+        return np.clip(np.concatenate([more] + [j] + [self.feet_contact]), -5, +5)
+
+    def is_alive(self):
+        body_pitch = self.body_rpy[1]   # not a good predictor
+        body_height = self.body_xyz[2]
+        if body_height < 0.5:
+            return False
+        else:
+            return True
