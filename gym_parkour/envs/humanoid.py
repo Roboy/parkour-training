@@ -1,6 +1,3 @@
-import os
-import pybullet
-from pybulletgym.envs.roboschool.robots.locomotors.walker_base import WalkerBase
 from pybulletgym.envs.roboschool.robots.robot_bases import MJCFBasedRobot
 from gym_parkour.envs.parkour_robot import ParkourRobot
 import numpy as np
@@ -9,9 +6,14 @@ import numpy as np
 class Humanoid(ParkourRobot, MJCFBasedRobot):
     self_collision = True
     foot_list = ["right_foot", "left_foot"]  # "left_hand", "right_hand"
+    electricity_cost = -2.0 * 4.25  # cost for using motors -- this parameter should be carefully tuned against reward for making progress, other values less improtant
+    stall_torque_cost = -0.1 * 4.25  # cost for running electric current through a motor even at zero rotational speed, small
+    foot_collision_cost = -1.0  # touches another leg, or other objects, that cost makes robot avoid smashing feet into itself
+    foot_ground_object_names = set(["floor"])  # to distinguish ground and other objects
+    joints_at_limit_cost = -0.1  # discourage stuck joints
 
-    def __init__(self, random_yaw=False, random_lean=False):
-        ParkourRobot.__init__(self)
+    def __init__(self, random_yaw=False, random_lean=False, **kwargs):
+        ParkourRobot.__init__(self, **kwargs)
         MJCFBasedRobot.__init__(self, 'humanoid_symmetric.xml', 'torso', action_dim=17, obs_dim=44)
         # 17 joints, 4 of them important for walking (hip, knee), others may as well be turned off, 17/4 = 4.25
         self.random_yaw = random_yaw
@@ -19,7 +21,6 @@ class Humanoid(ParkourRobot, MJCFBasedRobot):
 
     # overwrite ParkourRobot
     def robot_specific_reset(self, bullet_client):
-        # ParkourRobot.robot_specific_reset(self, bullet_client)
         self.feet = [self.parts[f] for f in self.foot_list]
         self.feet_contact = np.array([0.0 for f in self.foot_list], dtype=np.float32)
         self.motor_names = ["abdomen_z", "abdomen_y", "abdomen_x"]
@@ -81,8 +82,8 @@ class Humanoid(ParkourRobot, MJCFBasedRobot):
         if self.initial_z is None:
             self.initial_z = z
         r, p, yaw = self.body_rpy
-        self.walk_target_theta = np.arctan2(target_position_xy[1] - self.body_xyz[1],
-                                            target_position_xy[0] - self.body_xyz[0])
+        self.walk_target_theta = np.arctan2(self.target_position_xy[1] - self.body_xyz[1],
+                                            self.target_position_xy[0] - self.body_xyz[0])
         angle_to_target = self.walk_target_theta - yaw
 
         rot_speed = np.array(
@@ -99,8 +100,41 @@ class Humanoid(ParkourRobot, MJCFBasedRobot):
                          r, p], dtype=np.float32)
         return np.clip(np.concatenate([more] + [j] + [self.feet_contact]), -5, +5)
 
+    # overwrite ParkourRobot
+    def calc_reward(self, action, ground_ids):
+        # 2 here because 17 joints produce a lot of electricity cost just from policy noise
+        # living must be better than dying
+        alive = +2 if self.body_xyz[2] > 0.78 else -1
+
+        feet_collision_cost = 0.0
+        for i, f in enumerate(
+                self.feet):  # TODO: Maybe calculating feet contacts could be done within the robot code
+            contact_ids = set((x[2], x[4]) for x in f.contact_list())
+            # print("CONTACT OF '%d' WITH %d" % (contact_ids, ",".join(contact_names)) )
+            if ground_ids & contact_ids:
+                # see Issue 63: https://github.com/openai/roboschool/issues/63
+                # feet_collision_cost += self.foot_collision_cost
+                self.feet_contact[i] = 1.0
+            else:
+                self.feet_contact[i] = 0.0
+
+        electricity_cost = self.electricity_cost * float(np.abs(
+            action * self.joint_speeds).mean())  # let's assume we have DC motor with controller, and reverse current braking
+        electricity_cost += self.stall_torque_cost * float(np.square(action).mean())
+
+        joints_at_limit_cost = float(self.joints_at_limit_cost * self.joints_at_limit)
+
+        rewards = [
+            alive,
+            electricity_cost,
+            joints_at_limit_cost,
+            feet_collision_cost
+        ]
+        return sum(rewards)
+
+    # overwrite ParkourRobot
     def is_alive(self):
-        body_pitch = self.body_rpy[1]   # not a good predictor
+        body_pitch = self.body_rpy[1]  # not a good predictor
         body_height = self.body_xyz[2]
         if body_height < 0.5:
             return False

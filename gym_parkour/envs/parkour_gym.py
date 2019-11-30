@@ -7,10 +7,10 @@ from gym_parkour.envs.track_scene import TrackScene
 
 class ParkourGym(BaseBulletEnv):
     def __init__(self, render=False):
-        self.robot = Humanoid()
+        self.target_position_xy = (15, 0)
+        self.robot = Humanoid(target_position_xy=self.target_position_xy)
         BaseBulletEnv.__init__(self, self.robot, render)
         self.camera_x = 0
-        self.target_position_xy = (3, 0)
         self.saved_state_id = None
 
     # Overwrite BaseBulletEnv
@@ -36,7 +36,7 @@ class ParkourGym(BaseBulletEnv):
         if self.saved_state_id is None:
             self.saved_state_id = self._p.saveState()
         print("saving state self.saved_state_id:", self.saved_state_id)
-        return r
+        return self.robot.calc_state(self.target_position_xy)
 
     electricity_cost = -2.0 * 4.25  # cost for using motors -- this parameter should be carefully tuned against reward for making progress, other values less improtant
     stall_torque_cost = -0.1 * 4.25  # cost for running electric current through a motor even at zero rotational speed, small
@@ -47,50 +47,19 @@ class ParkourGym(BaseBulletEnv):
     def step(self, a):
         self.robot.apply_action(a)
         self.scene.global_step()
-        state = self.robot.calc_state()  # also calculates self.joints_at_limit
-        done = False
-        if not np.isfinite(state).all():  # check state
-            print("~INF~", state)
-            done = True
 
-        alive = float(self.robot.alive_bonus(state[0] + self.robot.initial_z, self.robot.body_rpy[
-            1]))  # state[0] is body height above ground, body_rpy[1] is pitch
-        if alive < 0:
-            done = True
-
-        feet_collision_cost = 0.0
-        for i, f in enumerate(
-                self.robot.feet):  # TODO: Maybe calculating feet contacts could be done within the robot code
-            contact_ids = set((x[2], x[4]) for x in f.contact_list())
-            # print("CONTACT OF '%d' WITH %d" % (contact_ids, ",".join(contact_names)) )
-            if self.ground_ids & contact_ids:
-                # see Issue 63: https://github.com/openai/roboschool/issues/63
-                # feet_collision_cost += self.foot_collision_cost
-                self.robot.feet_contact[i] = 1.0
-            else:
-                self.robot.feet_contact[i] = 0.0
-
-        electricity_cost = self.electricity_cost * float(np.abs(
-            a * self.robot.joint_speeds).mean())  # let's assume we have DC motor with controller, and reverse current braking
-        electricity_cost += self.stall_torque_cost * float(np.square(a).mean())
-
-        joints_at_limit_cost = float(self.joints_at_limit_cost * self.robot.joints_at_limit)
-
-        rewards = [
-            alive,
-            electricity_cost,
-            joints_at_limit_cost,
-            feet_collision_cost
-        ]
-        # self.reward += sum(self.rewards)
         distance_to_target = np.linalg.norm(np.array(self.robot.body_xyz[0:2]) - np.array(self.target_position_xy))
-        if distance_to_target < 1:
-            print('target reached!!!')
+        done = False
+        if distance_to_target < 1 or not self.robot.is_alive():
             done = True
 
-        return state, sum(rewards), bool(done), {}
+        state = self.robot.calc_state(self.target_position_xy)  # also calculates self.joints_at_limit
+        reward = self.robot.calc_reward(a, self.ground_ids)
+        return state, reward, bool(done), {}
 
     def camera_adjust(self):
-        x, y, z = self.body_xyz
-        self.camera_x = 0.98 * self.camera_x + (1 - 0.98) * x
-        self.camera.move_and_look_at(self.camera_x, y - 2.0, 1.4, x, y, 1.0)
+        # useless?
+        pass
+        # x, y, z = self.body_xyz
+        # self.camera_x = 0.98 * self.camera_x + (1 - 0.98) * x
+        # self.camera.move_and_look_at(self.camera_x, y - 2.0, 1.4, x, y, 1.0)

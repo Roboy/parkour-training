@@ -6,7 +6,8 @@ from abc import ABC, abstractmethod
 
 
 class ParkourRobot(XmlBasedRobot, ABC):
-    def __init__(self):
+    def __init__(self, target_position_xy):
+        self.target_position_xy = target_position_xy
         power = 0.41
         self.power = power
 
@@ -20,8 +21,12 @@ class ParkourRobot(XmlBasedRobot, ABC):
             j.set_motor_torque(self.power * j.power_coef * float(np.clip(a[n], -1, +1)))
 
     @abstractmethod
-    def calc_state(self, target_position_xy):
+    def calc_state(self):
         # return the robot state. This is what is returned by gym.step as state
+        pass
+
+    @abstractmethod
+    def calc_reward(self, action, ground_ids ):
         pass
 
     @abstractmethod
