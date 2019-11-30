@@ -31,7 +31,7 @@ class ParkourGym(BaseBulletEnv):
             self._p.restoreState(self.stateId)
 
         r = BaseBulletEnv._reset(self)
-        self._p.configureDebugVisualizer(pybullet.COV_ENABLE_RENDERING,0)
+        self._p.configureDebugVisualizer(pybullet.COV_ENABLE_RENDERING, 0)
 
         self.parts, self.jdict, self.ordered_joints, self.robot_body = self.robot.addToScene(self._p,
                                                                                              self.scene.ground_plane_mjcf)
@@ -39,7 +39,7 @@ class ParkourGym(BaseBulletEnv):
                                self.foot_ground_object_names])
         self._p.configureDebugVisualizer(pybullet.COV_ENABLE_RENDERING, 1)
         if self.stateId < 0:
-            self.stateId=self._p.saveState()
+            self.stateId = self._p.saveState()
         # print("saving state self.stateId:",self.stateId)
         self.steps = 0
         return r
@@ -48,14 +48,15 @@ class ParkourGym(BaseBulletEnv):
         "Used by multiplayer stadium to move sideways, to another running lane."
         self.cpp_robot.query_position()
         pose = self.cpp_robot.root_part.pose()
-        pose.move_xyz(init_x, init_y, init_z)  # Works because robot loads around (0,0,0), and some robots have z != 0 that is left intact
+        pose.move_xyz(init_x, init_y,
+                      init_z)  # Works because robot loads around (0,0,0), and some robots have z != 0 that is left intact
         self.cpp_robot.set_pose(pose)
 
-    electricity_cost = -2.0 * 4.25	 # cost for using motors -- this parameter should be carefully tuned against reward for making progress, other values less improtant
+    electricity_cost = -2.0 * 4.25  # cost for using motors -- this parameter should be carefully tuned against reward for making progress, other values less improtant
     stall_torque_cost = -0.1 * 4.25  # cost for running electric current through a motor even at zero rotational speed, small
-    foot_collision_cost = -1.0	# touches another leg, or other objects, that cost makes robot avoid smashing feet into itself
+    foot_collision_cost = -1.0  # touches another leg, or other objects, that cost makes robot avoid smashing feet into itself
     foot_ground_object_names = set(["floor"])  # to distinguish ground and other objects
-    joints_at_limit_cost = -0.1	 # discourage stuck joints
+    joints_at_limit_cost = -0.1  # discourage stuck joints
 
     def step(self, a):
         self.robot.apply_action(a)
@@ -63,23 +64,23 @@ class ParkourGym(BaseBulletEnv):
 
         state = self.robot.calc_state()  # also calculates self.joints_at_limit
 
-        alive = float(self.robot.alive_bonus(state[0] + self.robot.initial_z, self.robot.body_rpy[1]))   # state[0] is body height above ground, body_rpy[1] is pitch
+        alive = float(self.robot.alive_bonus(state[0] + self.robot.initial_z, self.robot.body_rpy[
+            1]))  # state[0] is body height above ground, body_rpy[1] is pitch
         done = alive < 0
-        self.steps += 1
-        if self.steps > 100:
-            print('exceeded steps')
-            self.steps = 0
-            done = True
         if not np.isfinite(state).all():
             print("~INF~", state)
             done = True
-
+        distance_to_target = np.linalg.norm([self.robot.body_xyz[0] - self.walk_target_x, self.robot.body_xyz[1] - self.walk_target_y])
+        if distance_to_target < 1:
+            print('target reached!!!')
+            done = True
         potential_old = self.potential
         self.potential = self.robot.calc_potential()
         progress = float(self.potential - potential_old)
 
         feet_collision_cost = 0.0
-        for i, f in enumerate(self.robot.feet):  # TODO: Maybe calculating feet contacts could be done within the robot code
+        for i, f in enumerate(
+                self.robot.feet):  # TODO: Maybe calculating feet contacts could be done within the robot code
             contact_ids = set((x[2], x[4]) for x in f.contact_list())
             # print("CONTACT OF '%d' WITH %d" % (contact_ids, ",".join(contact_names)) )
             if self.ground_ids & contact_ids:
@@ -89,41 +90,25 @@ class ParkourGym(BaseBulletEnv):
             else:
                 self.robot.feet_contact[i] = 0.0
 
-        electricity_cost = self.electricity_cost * float(np.abs(a*self.robot.joint_speeds).mean())  # let's assume we have DC motor with controller, and reverse current braking
+        electricity_cost = self.electricity_cost * float(np.abs(
+            a * self.robot.joint_speeds).mean())  # let's assume we have DC motor with controller, and reverse current braking
         electricity_cost += self.stall_torque_cost * float(np.square(a).mean())
 
         joints_at_limit_cost = float(self.joints_at_limit_cost * self.robot.joints_at_limit)
-        debugmode = 0
-        if debugmode:
-            print("alive=")
-            print(alive)
-            print("progress")
-            print(progress)
-            print("electricity_cost")
-            print(electricity_cost)
-            print("joints_at_limit_cost")
-            print(joints_at_limit_cost)
-            print("feet_collision_cost")
-            print(feet_collision_cost)
 
-        self.rewards = [
+        rewards = [
             alive,
             progress,
             electricity_cost,
             joints_at_limit_cost,
             feet_collision_cost
         ]
-        if debugmode:
-            print("rewards=")
-            print(self.rewards)
-            print("sum rewards")
-            print(sum(self.rewards))
-        self.HUD(state, a, done)
-        self.reward += sum(self.rewards)
+        # self.HUD(state, a, done)
+        # self.reward += sum(self.rewards)
 
-        return state, sum(self.rewards), bool(done), {}
+        return state, sum(rewards), bool(done), {}
 
     def camera_adjust(self):
         x, y, z = self.body_xyz
-        self.camera_x = 0.98*self.camera_x + (1-0.98)*x
-        self.camera.move_and_look_at(self.camera_x, y-2.0, 1.4, x, y, 1.0)
+        self.camera_x = 0.98 * self.camera_x + (1 - 0.98) * x
+        self.camera.move_and_look_at(self.camera_x, y - 2.0, 1.4, x, y, 1.0)
