@@ -1,26 +1,45 @@
-from pybulletgym.envs.roboschool.robots.robot_bases import MJCFBasedRobot
+from pybulletgym.envs.roboschool.robots.robot_bases import MJCFBasedRobot, XmlBasedRobot
 from gym_parkour.envs.parkour_robot import ParkourRobot
 import numpy as np
+import pybullet
+import os
 
 
-class Humanoid(ParkourRobot, MJCFBasedRobot):
+class Humanoid(ParkourRobot, XmlBasedRobot):
     self_collision = True
     foot_list = ["right_foot", "left_foot"]  # "left_hand", "right_hand"
     electricity_cost = -2.0 * 4.25  # cost for using motors -- this parameter should be carefully tuned against reward for making progress, other values less improtant
     stall_torque_cost = -0.1 * 4.25  # cost for running electric current through a motor even at zero rotational speed, small
     foot_collision_cost = -1.0  # touches another leg, or other objects, that cost makes robot avoid smashing feet into itself
-    foot_ground_object_names = set(["floor"])  # to distinguish ground and other objects
     joints_at_limit_cost = -0.1  # discourage stuck joints
 
     def __init__(self, random_yaw=False, random_lean=False, **kwargs):
         ParkourRobot.__init__(self, **kwargs)
-        MJCFBasedRobot.__init__(self, 'humanoid_symmetric.xml', 'torso', action_dim=17, obs_dim=44)
+        XmlBasedRobot.__init__(self, robot_name='humanoid_symmetric.xml', action_dim=17, obs_dim=44,
+                               self_collision=True)
         # 17 joints, 4 of them important for walking (hip, knee), others may as well be turned off, 17/4 = 4.25
         self.random_yaw = random_yaw
         self.random_lean = random_lean
+        self.model_xml = 'humanoid_symmetric.xml'
+        self.doneLoading = False
 
     # overwrite ParkourRobot
-    def robot_specific_reset(self, bullet_client):
+    def reset(self, bullet_client):
+        full_path = os.path.join(os.path.dirname(__file__), "assets", self.model_xml)
+
+        self._p = bullet_client
+        # print("Created bullet_client with id=", self._p._client)
+        if self.doneLoading == 0:
+            self.ordered_joints = []
+            self.doneLoading = 1
+            if self.self_collision:
+                self.objects = self._p.loadMJCF(full_path,
+                                                flags=pybullet.URDF_USE_SELF_COLLISION | pybullet.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS)
+                self.parts, self.jdict, self.ordered_joints, self.robot_body = self.addToScene(self._p, self.objects)
+            else:
+                self.objects = self._p.loadMJCF(full_path)
+                self.parts, self.jdict, self.ordered_joints, self.robot_body = self.addToScene(self._p, self.objects)
+
         self.feet = [self.parts[f] for f in self.foot_list]
         self.feet_contact = np.array([0.0 for f in self.foot_list], dtype=np.float32)
         self.motor_names = ["abdomen_z", "abdomen_y", "abdomen_x"]
@@ -60,9 +79,6 @@ class Humanoid(ParkourRobot, MJCFBasedRobot):
         force_gain = 1
         for i, m, power in zip(range(17), self.motors, self.motor_power):
             m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
-
-    def alive_bonus(self, z, pitch):
-        return +2 if z > 0.78 else -1  # 2 here because 17 joints produce a lot of electricity cost just from policy noise, living must be better than dying
 
     # overwrite ParkourRobot
     def calc_state(self, target_position_xy):
