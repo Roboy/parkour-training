@@ -13,8 +13,8 @@ class ParkourGym(BaseBulletEnv):
         self.target_position_xy = (3, 0)
         self.saved_state_id = None
 
+    # Overwrite BaseBulletEnv
     def create_single_player_scene(self, bullet_client):
-        # called by BaseBulletEnv on first reset
         self.scene = TrackScene(bullet_client, gravity=9.8, timestep=0.0165 / 4, frame_skip=4)
         self.scene.zero_at_running_strip_start_line = False
         return self.scene
@@ -38,14 +38,6 @@ class ParkourGym(BaseBulletEnv):
         print("saving state self.saved_state_id:", self.saved_state_id)
         return r
 
-    # def move_robot(self, init_x, init_y, init_z):
-    #     "Used by multiplayer stadium to move sideways, to another running lane."
-    #     self.cpp_robot.query_position()
-    #     pose = self.cpp_robot.root_part.pose()
-    #     pose.move_xyz(init_x, init_y,
-    #                   init_z)  # Works because robot loads around (0,0,0), and some robots have z != 0 that is left intact
-    #     self.cpp_robot.set_pose(pose)
-
     electricity_cost = -2.0 * 4.25  # cost for using motors -- this parameter should be carefully tuned against reward for making progress, other values less improtant
     stall_torque_cost = -0.1 * 4.25  # cost for running electric current through a motor even at zero rotational speed, small
     foot_collision_cost = -1.0  # touches another leg, or other objects, that cost makes robot avoid smashing feet into itself
@@ -56,20 +48,15 @@ class ParkourGym(BaseBulletEnv):
         self.robot.apply_action(a)
         self.scene.global_step()
         state = self.robot.calc_state()  # also calculates self.joints_at_limit
+        done = False
+        if not np.isfinite(state).all():  # check state
+            print("~INF~", state)
+            done = True
 
         alive = float(self.robot.alive_bonus(state[0] + self.robot.initial_z, self.robot.body_rpy[
             1]))  # state[0] is body height above ground, body_rpy[1] is pitch
-        done = alive < 0
-        if not np.isfinite(state).all():
-            print("~INF~", state)
+        if alive < 0:
             done = True
-        distance_to_target = np.linalg.norm(np.array(self.robot.body_xyz[0:2]) - np.array(self.target_position_xy))
-        if distance_to_target < 1:
-            print('target reached!!!')
-            done = True
-        potential_old = self.potential
-        self.potential = self.robot.calc_potential()
-        progress = float(self.potential - potential_old)
 
         feet_collision_cost = 0.0
         for i, f in enumerate(
@@ -91,13 +78,15 @@ class ParkourGym(BaseBulletEnv):
 
         rewards = [
             alive,
-            progress,
             electricity_cost,
             joints_at_limit_cost,
             feet_collision_cost
         ]
-        # self.HUD(state, a, done)
         # self.reward += sum(self.rewards)
+        distance_to_target = np.linalg.norm(np.array(self.robot.body_xyz[0:2]) - np.array(self.target_position_xy))
+        if distance_to_target < 1:
+            print('target reached!!!')
+            done = True
 
         return state, sum(rewards), bool(done), {}
 
