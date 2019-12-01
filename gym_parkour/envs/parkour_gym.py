@@ -27,7 +27,7 @@ class ParkourGym(BaseBulletEnv):
             # restore state of pybullet with saved state from first reset
             self._p.restoreState(self.saved_state_id)
         else:
-            r = BaseBulletEnv._reset(self)
+            BaseBulletEnv._reset(self)
             self._p.configureDebugVisualizer(pybullet.COV_ENABLE_RENDERING, 0)
 
             self.parts, self.jdict, self.ordered_joints, self.robot_body = self.robot.addToScene(self._p,
