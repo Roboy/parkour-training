@@ -131,6 +131,7 @@ dmypy.json
 .idea/modules.xml
 .idea/parkour-training.iml
 .idea/vcs.xml
+.idea/
 gym_parkour.egg-info/
 gym_parkour/__pycache__/
 gym_parkour/envs/__pycache__/
