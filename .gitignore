@@ -134,3 +134,4 @@ dmypy.json
 gym_parkour.egg-info/
 gym_parkour/__pycache__/
 gym_parkour/envs/__pycache__/
+.vscode/
