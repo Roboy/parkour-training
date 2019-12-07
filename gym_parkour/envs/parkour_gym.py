@@ -3,7 +3,8 @@ import numpy as np
 from pybulletgym.envs.roboschool.envs.env_bases import BaseBulletEnv
 from gym_parkour.envs.humanoid import Humanoid
 from gym_parkour.envs.track_scene import TrackScene
-
+from gym.spaces.dict import Dict
+import gym.spaces as spaces
 
 class ParkourGym(BaseBulletEnv):
     foot_ground_object_names = {"floor"}  # to distinguish ground and other objects
@@ -13,6 +14,11 @@ class ParkourGym(BaseBulletEnv):
         self.robot = Humanoid(target_position_xy=self.target_position_xy)
         BaseBulletEnv.__init__(self, self.robot, render)
         self.saved_state_id = None
+        self.action_space = Dict()
+        self.observation_space = spaces.Dict({
+            'sensors': self.robot.observation_space,
+            'camera': spaces.Box(low=0, high=255, shape=(80, 80, 3)),
+        })
         self.action_space = self.robot.action_space
         self.observation_space = self.robot.observation_space
 
@@ -37,7 +43,9 @@ class ParkourGym(BaseBulletEnv):
             self._p.configureDebugVisualizer(pybullet.COV_ENABLE_RENDERING, 1)
             self.saved_state_id = self._p.saveState()
 
-        return self.robot.calc_state(self.target_position_xy)
+        state = self.robot.calc_state(self.target_position_xy)
+        self.last_position = self.robot.body_xyz
+        return state
 
     def step(self, a):
         self.robot.apply_action(a)
@@ -49,5 +57,54 @@ class ParkourGym(BaseBulletEnv):
             done = True
 
         state = self.robot.calc_state(self.target_position_xy)
-        reward = self.robot.calc_reward(a, self.ground_ids)
+        robot_specific_reward = self.robot.calc_reward(a, self.ground_ids)
+        velocity = np.linalg.norm(np.array(self.target_position_xy) - np.array(self.last_position[:2])) \
+                    - np.linalg.norm(np.array(self.target_position_xy) - np.array(self.robot.body_xyz[:2]))
+        self.last_position = self.robot.body_xyz
+        reward = robot_specific_reward + 1e3 * velocity
+        # print('robot reward: ' + str(robot_specific_reward) + ' velocity: ' + str(velocity) + str(' reward: ' + str(reward)))
+
+        # base_pos = [0, 0, 0]
+        # if hasattr(self, 'robot'):
+        #     if hasattr(self.robot, 'body_xyz'):
+        #         base_pos = self.robot.body_xyz
+        # base_pos = self.robot.body_xyz
+        # view_matrix = self._p.computeViewMatrixFromYawPitchRoll(
+        #     cameraTargetPosition=base_pos,
+        #     distance=self._cam_dist,
+        #     yaw=self._cam_yaw,
+        #     pitch=self._cam_pitch,
+        #     roll=0,
+        #     upAxisIndex=2)
+        # view_matrix = self._p.computeViewMatrix(
+        #     cameraEyePosition=self.robot.body_xyz,
+        #     cameraTargetPosition=(10, 0, 0),
+        #     cameraUpVector=(1, 0, 1)
+        # )
+        # proj_matrix = self._p.computeProjectionMatrixFOV(
+        #     fov=60, aspect=1.0, # float(self._render_width) / self._render_height,
+        #     nearVal=0.1, farVal=100.0)
+        # (_, _, px, _, _) = self._p.getCameraImage(
+        #     width=80, height=80, viewMatrix=view_matrix,
+        #     projectionMatrix=proj_matrix,
+        #     renderer=pybullet.ER_BULLET_HARDWARE_OPENGL
+        # )
+        # rgb_array = np.array(px)
+        # rgb_array = rgb_array[:, :, :3]
+        # # import matplotlib.pyplot as plt
+        # # plt.imshow(rgb_array)
+        # observation = {
+        #     'sensors': state,
+        #     'camera': rgb_array
+        # }
+        # follow robot with camera
+        robot_position = self.robot.body_xyz
+        camInfo = self._p.getDebugVisualizerCamera()
+        curTargetPos = camInfo[11]
+        distance = camInfo[10]
+        yaw = camInfo[8]
+        pitch = camInfo[9]
+        targetPos = [0.95 * curTargetPos[0] + 0.05 * robot_position[0], 0.95 * curTargetPos[1] + 0.05 * robot_position[1],
+                     curTargetPos[2]]
+        self._p.resetDebugVisualizerCamera(distance, yaw, pitch, targetPos)
         return state, reward, bool(done), {}
