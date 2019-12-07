@@ -98,13 +98,14 @@ class ParkourGym(BaseBulletEnv):
         #     'camera': rgb_array
         # }
         # follow robot with camera
-        robot_position = self.robot.body_xyz
-        camInfo = self._p.getDebugVisualizerCamera()
-        curTargetPos = camInfo[11]
-        distance = camInfo[10]
-        yaw = camInfo[8]
-        pitch = camInfo[9]
-        targetPos = [0.95 * curTargetPos[0] + 0.05 * robot_position[0], 0.95 * curTargetPos[1] + 0.05 * robot_position[1],
-                     curTargetPos[2]]
-        self._p.resetDebugVisualizerCamera(distance, yaw, pitch, targetPos)
+        if self.isRender:
+            robot_position = self.robot.body_xyz
+            camInfo = self._p.getDebugVisualizerCamera()
+            curTargetPos = camInfo[11]
+            distance = camInfo[10]
+            yaw = camInfo[8]
+            pitch = camInfo[9]
+            targetPos = [0.95 * curTargetPos[0] + 0.05 * robot_position[0], 0.95 * curTargetPos[1] + 0.05 * robot_position[1],
+                         curTargetPos[2]]
+            self._p.resetDebugVisualizerCamera(distance, yaw, pitch, targetPos)
         return state, reward, bool(done), {}
