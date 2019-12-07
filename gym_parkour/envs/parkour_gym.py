@@ -61,8 +61,8 @@ class ParkourGym(BaseBulletEnv):
         velocity = np.linalg.norm(np.array(self.target_position_xy) - np.array(self.last_position[:2])) \
                     - np.linalg.norm(np.array(self.target_position_xy) - np.array(self.robot.body_xyz[:2]))
         self.last_position = self.robot.body_xyz
-        reward = robot_specific_reward + 1e3 * velocity
-        # print('robot reward: ' + str(robot_specific_reward) + ' velocity: ' + str(velocity) + str(' reward: ' + str(reward)))
+        reward = robot_specific_reward + 3e2 * velocity
+        print('robot reward: ' + str(robot_specific_reward) + ' velocity: ' + str(velocity) + str(' reward: ' + str(reward)))
 
         # base_pos = [0, 0, 0]
         # if hasattr(self, 'robot'):
