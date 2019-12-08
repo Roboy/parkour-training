@@ -24,4 +24,4 @@ ParkourChallenge-v0
 pbullet migth throw an error if several environments run in parallel:
 pybullet.error: Not connected to physics server.
 
-for fix see here: pybullet.error: Not connected to physics server.
+for fix see here: https://pybullet.org/Bullet/phpBB3/viewtopic.php?t=12722
