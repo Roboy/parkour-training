@@ -7,7 +7,7 @@ from gym.spaces.dict import Dict
 import gym.spaces as spaces
 
 class ParkourGym(BaseBulletEnv):
-    foot_ground_object_names = {"floor"}  # to distinguish ground and other objects
+    foot_ground_object_names = {"starting_ground"}  # to distinguish ground and other objects
 
     def __init__(self, render=False):
         self.target_position_xy = (15, 0)

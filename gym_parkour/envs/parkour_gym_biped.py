@@ -27,29 +27,30 @@ class ParkourGymBiped(BaseBulletEnv):
             # print("restoreState self.stateId:",self.stateId)
             self._p.restoreState(self.saved_state_id)
 
-        r = BaseBulletEnv._reset(self)
-        self._p.configureDebugVisualizer(pybullet.COV_ENABLE_RENDERING, 0)
+        else:
+            BaseBulletEnv._reset(self)
+            self._p.configureDebugVisualizer(pybullet.COV_ENABLE_RENDERING, 0)
 
-        self.parts, self.jdict, self.ordered_joints, self.robot_body = self.robot.addToScene(self._p,
-                                                                                             self.scene.ground_plane_mjcf)
-        self.ground_ids = set([(self.parts[f].bodies[self.parts[f].bodyIndex], self.parts[f].bodyPartIndex) for f in
-                               self.foot_ground_object_names])
-        self._p.configureDebugVisualizer(pybullet.COV_ENABLE_RENDERING, 1)
-        if self.saved_state_id is None:
+            self.parts, self.jdict, self.ordered_joints, self.robot_body = self.robot.addToScene(self._p,
+                                                                                                 self.scene.ground_plane_mjcf)
+            self.ground_ids = set([(self.parts[f].bodies[self.parts[f].bodyIndex], self.parts[f].bodyPartIndex) for f in
+                                   self.foot_ground_object_names])
+            self._p.configureDebugVisualizer(pybullet.COV_ENABLE_RENDERING, 1)
             self.saved_state_id = self._p.saveState()
-        print("saving state self.saved_state_id:", self.saved_state_id)
-        return r
+        state = self.robot.calc_state(self.target_position_xy)
+        self.last_position = self.robot.body_xyz
+        return state
 
     electricity_cost = -2.0 * 4.25  # cost for using motors -- this parameter should be carefully tuned against reward for making progress, other values less improtant
     stall_torque_cost = -0.1 * 4.25  # cost for running electric current through a motor even at zero rotational speed, small
     foot_collision_cost = -1.0  # touches another leg, or other objects, that cost makes robot avoid smashing feet into itself
-    foot_ground_object_names = set(["floor"])  # to distinguish ground and other objects
+    foot_ground_object_names = set(["starting_ground"])  # to distinguish ground and other objects
     joints_at_limit_cost = -0.1  # discourage stuck joints
 
     def step(self, a):
         self.robot.apply_action(a)
         self.scene.global_step()
-        state = self.robot.calc_state()  # also calculates self.joints_at_limit
+        state = self.robot.calc_state(self.target_position_xy)  # also calculates self.joints_at_limit
         done = False
         if not np.isfinite(state).all():  # check state
             print("~INF~", state)

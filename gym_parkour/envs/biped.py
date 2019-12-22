@@ -12,7 +12,7 @@ class Biped(ParkourRobot, URDFBasedRobot):
 
     def __init__(self, random_yaw=False, random_lean=False, **kwargs):
         ParkourRobot.__init__(self, **kwargs)
-        URDFBasedRobot.__init__(self, 'biped.urdf', 'base', action_dim=17, obs_dim=44)
+        URDFBasedRobot.__init__(self, 'biped.urdf', 'base', action_dim=6, obs_dim=12)
         self.random_yaw = random_yaw
         self.random_lean = random_lean
 
@@ -121,6 +121,11 @@ class Biped(ParkourRobot, URDFBasedRobot):
                 basePosition=self.basePosition,
                 baseOrientation=self.baseOrientation,
                 useFixedBase=self.fixed_base))
+
+        
+        self.motor_names = ["right_hip", "left_hip", "right_knee", "left_knee", "right_ankle", "left_ankle"]
+        self.motor_power = [100 for i in range(6)]
+        self.motors = [self.jdict[n] for n in self.motor_names]
 
         for j in self.ordered_joints:
             j.reset_current_position(0,0)

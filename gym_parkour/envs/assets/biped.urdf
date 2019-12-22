@@ -35,7 +35,7 @@
             <origin xyz="0 0 -0.2"/>
         </collision>
     </link>
-    
+
     <link name="leg_left_1">
         <inertial>
             <mass value="1.0" />
@@ -73,7 +73,7 @@
             <origin xyz="0 0 -0.2"/>
         </collision>
     </link>
-   
+
     <link name="leg_left_2">
         <inertial>
             <mass value="1.0" />
@@ -113,7 +113,7 @@
     <link name="foot_left">
         <inertial>
             <mass value="1.0" />
-            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+            <inertia ixx="1.0" ixy="1.0" ixz="1.0" iyy="1.0" iyz="0.0" izz="1.0" />
         </inertial>
         <visual name="visual">
             <geometry>
@@ -129,14 +129,14 @@
 
     <joint name="right_hip" type="continuous">
         <origin xyz="0 0.25 0" rpy="0 0 0" />
-         <axis xyz = "0 1 0"/>
+        <axis xyz = "0 1 0"/>
         <parent link="base" />
         <child link="leg_right_1" />
     </joint>
 
     <joint name="left_hip" type="continuous">
         <origin xyz="0 -0.25 0" rpy="0 0 0" />
-         <axis xyz = "0 1 0"/>
+        <axis xyz = "0 1 0"/>
         <parent link="base" />
         <child link="leg_left_1" />
     </joint>
@@ -171,5 +171,5 @@
         <child link="foot_left" />
     </joint>
 
-    
+
 </robot>
