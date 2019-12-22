@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <robot name="biped">
+
+    <!--Main links-->
+    <!--Masses and inertias of 0 are explicitly stated for pybullet-->
+
     <link name="base">
         <inertial>
             <mass value="1.0" />
@@ -127,19 +131,112 @@
         </collision>
     </link>
 
-    <joint name="right_hip" type="continuous">
+
+    <!--Auxiliary links to imitate ball-in-socket joints-->
+
+    <link name="hip_right_auxiliary_1">
+        <inertial>
+            <mass value="0.0" />
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0" />
+        </inertial>
+    </link>
+
+    <link name="hip_right_auxiliary_2">
+        <inertial>
+            <mass value="0.0" />
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0" />
+        </inertial>
+    </link>
+
+    <link name="hip_left_auxiliary_1">
+        <inertial>
+            <mass value="0.0" />
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0" />
+        </inertial>
+    </link>
+
+    <link name="hip_left_auxiliary_2">
+        <inertial>
+            <mass value="0.0" />
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0" />
+        </inertial>
+    </link>    
+
+
+    <link name="ankle_right_auxiliary_1">
+        <inertial>
+            <mass value="0.0" />
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0" />
+        </inertial>
+    </link>
+
+    <link name="ankle_right_auxiliary_2">
+        <inertial>
+            <mass value="0.0" />
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0" />
+        </inertial>
+    </link>
+
+    <link name="ankle_left_auxiliary_1">
+        <inertial>
+            <mass value="0.0" />
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0" />
+        </inertial>
+    </link>
+
+    <link name="ankle_left_auxiliary_2">
+        <inertial>
+            <mass value="0.0" />
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0" />
+        </inertial>
+    </link>
+
+     <!--Joints-->
+
+    <joint name="right_hip_y" type="continuous">
         <origin xyz="0 0.25 0" rpy="0 0 0" />
         <axis xyz = "0 1 0"/>
         <parent link="base" />
+        <child link="hip_right_auxiliary_1" />
+    </joint>
+
+    <joint name="right_hip_x" type="continuous">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <axis xyz = "1 0 0"/>
+        <parent link="hip_right_auxiliary_1" />
+        <child link="hip_right_auxiliary_2" />
+    </joint>
+
+    <joint name="right_hip_z" type="continuous">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <axis xyz = "1 0 0"/>
+        <parent link="hip_right_auxiliary_2" />
         <child link="leg_right_1" />
     </joint>
 
-    <joint name="left_hip" type="continuous">
+
+
+    <joint name="left_hip_y" type="continuous">
         <origin xyz="0 -0.25 0" rpy="0 0 0" />
         <axis xyz = "0 1 0"/>
         <parent link="base" />
+        <child link="hip_left_auxiliary_1" />
+    </joint>
+
+    <joint name="left_hip_x" type="continuous">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <axis xyz = "1 0 0"/>
+        <parent link="hip_left_auxiliary_1" />
+        <child link="hip_left_auxiliary_2" />
+    </joint>
+
+    <joint name="left_hip_z" type="continuous">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <axis xyz = "1 0 0"/>
+        <parent link="hip_left_auxiliary_2" />
         <child link="leg_left_1" />
     </joint>
+
 
     <joint name="right_knee" type="revolute">
         <origin xyz="0 0 -0.4" rpy="0 0 0" />
@@ -157,17 +254,48 @@
         <child link="leg_left_2" />
     </joint>
 
-    <joint name="right_ankle" type="continuous">
+
+        <joint name="right_ankle_y" type="continuous">
         <origin xyz="0 0 -0.4" rpy="0 0 0" />
         <axis xyz = "0 1 0"/>
         <parent link="leg_right_2" />
+        <child link="ankle_right_auxiliary_1" />
+    </joint>
+
+    <joint name="right_ankle_x" type="continuous">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <axis xyz = "1 0 0"/>
+        <parent link="ankle_right_auxiliary_1" />
+        <child link="ankle_right_auxiliary_2" />
+    </joint>
+
+    <joint name="right_ankle_z" type="continuous">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <axis xyz = "1 0 0"/>
+        <parent link="ankle_right_auxiliary_2" />
         <child link="foot_right" />
     </joint>
 
-    <joint name="left_ankle" type="continuous">
+
+
+    <joint name="left_ankle_y" type="continuous">
         <origin xyz="0 0 -0.4" rpy="0 0 0" />
         <axis xyz = "0 1 0"/>
         <parent link="leg_left_2" />
+        <child link="ankle_left_auxiliary_1" />
+    </joint>
+
+    <joint name="left_ankle_x" type="continuous">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <axis xyz = "1 0 0"/>
+        <parent link="ankle_left_auxiliary_1" />
+        <child link="ankle_left_auxiliary_2" />
+    </joint>
+
+    <joint name="left_ankle_z" type="continuous">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <axis xyz = "1 0 0"/>
+        <parent link="ankle_left_auxiliary_2" />
         <child link="foot_left" />
     </joint>
 
