@@ -35,6 +35,14 @@ class ParkourRobot(ABC):
         # if False is returned the done flag will be set
         pass
 
+    @abstractmethod
+    def get_camera_pos(self):
+        pass
+
+    @abstractmethod
+    def get_pos_xyz(self):
+        pass
+
     def calc_potential(self):
         # necessary method for BulletBaseEnv
         return 0

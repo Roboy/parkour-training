@@ -156,3 +156,13 @@ class Humanoid(ParkourRobot, XmlBasedRobot):
             return False
         else:
             return True
+
+    def get_camera_pos(self):
+        return self.parts['lwaist'].get_pose()
+
+    def get_pos_xyz(self):
+        parts_xyz = np.array([p.pose().xyz() for p in self.parts.values()]).flatten()
+        body_pose = self.robot_body.pose()
+        return(
+            parts_xyz[0::3].mean(), parts_xyz[1::3].mean(),
+            body_pose.xyz()[2])  # torso z is more informative than mean z
