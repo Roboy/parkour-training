@@ -24,7 +24,7 @@ class ParkourGym(BaseBulletEnv):
             'camera': spaces.Box(low=0, high=255, shape=(80, 80, 1)),
         })
         self.action_space = self.robot.action_space
-        self.observation_space = self.robot.observation_space
+        # self.observation_space = self.robot.observation_space
 
     # Overwrite BaseBulletEnv
     def create_single_player_scene(self, bullet_client):
@@ -91,7 +91,7 @@ class ParkourGym(BaseBulletEnv):
             fov=60, aspect=1.0, # float(self._render_width) / self._render_height,
             nearVal=0.1, farVal=100.0)
         (_, _, px, _, _) = self._p.getCameraImage(
-            width=80, height=80, viewMatrix=view_matrix,
+            width=30, height=30, viewMatrix=view_matrix,
             projectionMatrix=proj_matrix,
             renderer=pybullet.ER_BULLET_HARDWARE_OPENGL
         )
@@ -108,5 +108,5 @@ class ParkourGym(BaseBulletEnv):
             'camera': gray_img
         }
 
-        return robot_state
+        return observation
 
