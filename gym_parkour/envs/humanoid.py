@@ -152,7 +152,7 @@ class Humanoid(ParkourRobot, XmlBasedRobot):
     def is_alive(self):
         body_pitch = self.body_rpy[1]  # not a good predictor
         body_height = self.body_xyz[2]
-        if body_height < 0.5:
+        if body_height < 0.8:
             return False
         else:
             return True
