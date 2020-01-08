@@ -21,7 +21,7 @@ class ParkourGym(BaseBulletEnv):
         self.action_space = Dict()
         self.observation_space = spaces.Dict({
             'robot_state': self.robot.observation_space,
-            'camera': spaces.Box(low=0, high=255, shape=(80, 80, 1)),
+            'camera': spaces.Box(low=0, high=255, shape=(30, 30, 1)),
         })
         self.action_space = self.robot.action_space
         # self.observation_space = self.robot.observation_space
