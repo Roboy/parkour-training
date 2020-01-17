@@ -28,9 +28,6 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         for i, m, power in zip(range(12), self.motors, self.motor_power):
             m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
 
-    def alive_bonus(self, z, pitch):
-        return +2 if z > 0.78 else -1  # 2 here because 17 joints produce a lot of electricity cost just from policy noise, living must be better than dying
-
     # overwrite ParkourRobot
     def calc_state(self, target_position_xy):
         j = np.array([j.current_relative_position() for j in self.ordered_joints], dtype=np.float32).flatten()
@@ -69,7 +66,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
 
     def calc_reward(self, action, ground_ids):
         # living must be better than dying
-        alive = +1 if self.body_xyz[2] > 0.3 else -10
+        alive = +1.5 if self.body_xyz[2] > 0.3 else -10
 
         # feet_collision_cost = 0.0
         # for i, f in enumerate(
