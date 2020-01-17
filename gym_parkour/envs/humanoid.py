@@ -146,7 +146,13 @@ class Humanoid(ParkourRobot, XmlBasedRobot):
             joints_at_limit_cost,
             feet_collision_cost
         ]
-        return sum(rewards)
+        info = dict(
+            alive_bonus=alive,
+            electricity_cost=electricity_cost,
+            joints_at_limit_cost=joints_at_limit_cost,
+            feet_collision_cost=feet_collision_cost
+        )
+        return sum(rewards), info
 
     # overwrite ParkourRobot
     def is_alive(self):

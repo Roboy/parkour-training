@@ -11,6 +11,7 @@ import random
 import copy
 import time
 
+
 class ParkourGym(BaseBulletEnv):
     foot_ground_object_names = {"floor"}  # to distinguish ground and other objects
 
@@ -52,20 +53,22 @@ class ParkourGym(BaseBulletEnv):
             self._p.configureDebugVisualizer(pybullet.COV_ENABLE_RENDERING, 1)
             self.saved_state_id = self._p.saveState()
 
-        self.last_distance_to_target = np.linalg.norm(np.array(self.robot.get_pos_xyz()[0:2]) - np.array(self.target_position_xy))
+        self.last_distance_to_target = np.linalg.norm(
+            np.array(self.robot.get_pos_xyz()[0:2]) - np.array(self.target_position_xy))
         return self.get_obs()
 
     def step(self, a):
         self.robot.apply_action(a)
         self.scene.global_step()
 
-        robot_specific_reward = self.robot.calc_reward(a, self.ground_ids)
+        robot_specific_reward, env_info = self.robot.calc_reward(a, self.ground_ids)
         distance_to_target = np.linalg.norm(np.array(self.robot.get_pos_xyz()[0:2]) - np.array(self.target_position_xy))
         done = False
         if distance_to_target < 1 or not self.robot.is_alive():
             done = True
         velocity = self.last_distance_to_target - distance_to_target
         velocity_reward = 1e2 * velocity
+        env_info['velocity_reward'] = velocity_reward
         reward = robot_specific_reward + velocity_reward
         # print('velocity reward: ' + str(velocity_reward))
         self.last_distance_to_target = copy.copy(distance_to_target)
@@ -78,24 +81,25 @@ class ParkourGym(BaseBulletEnv):
             distance = camInfo[10]
             yaw = camInfo[8]
             pitch = camInfo[9]
-            targetPos = [0.95 * curTargetPos[0] + 0.05 * robot_position[0], 0.95 * curTargetPos[1] + 0.05 * robot_position[1],
+            targetPos = [0.95 * curTargetPos[0] + 0.05 * robot_position[0],
+                         0.95 * curTargetPos[1] + 0.05 * robot_position[1],
                          curTargetPos[2]]
             self._p.resetDebugVisualizerCamera(distance, yaw, pitch, targetPos)
 
         observation = self.get_obs()
-        return observation, reward, bool(done), {}
+        return observation, reward, bool(done), env_info
 
     def get_obs(self):
         robot_state = self.robot.calc_state(self.target_position_xy)
         base_pos = list(self.robot.get_pos_xyz())
         base_pos[2] += 0.7
         view_matrix = self._p.computeViewMatrix(
-            cameraEyePosition=base_pos, #self.robot.body_xyz + [0, 0, 1],
+            cameraEyePosition=base_pos,  # self.robot.body_xyz + [0, 0, 1],
             cameraTargetPosition=self.target_position_xy + (1,),
             cameraUpVector=(1, 0, 1)
         )
         proj_matrix = self._p.computeProjectionMatrixFOV(
-            fov=60, aspect=1.0, # float(self._render_width) / self._render_height,
+            fov=60, aspect=1.0,  # float(self._render_width) / self._render_height,
             nearVal=0.1, farVal=100.0)
         (_, _, px, _, _) = self._p.getCameraImage(
             width=30, height=30, viewMatrix=view_matrix,
@@ -119,4 +123,3 @@ class ParkourGym(BaseBulletEnv):
             observation = robot_state
 
         return observation
-

@@ -26,7 +26,7 @@ class ParkourRobot(ABC):
         pass
 
     @abstractmethod
-    def calc_reward(self, action, ground_ids):
+    def calc_reward(self, action, ground_ids)-> (float, dict):
         pass
 
     @abstractmethod

@@ -66,7 +66,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
 
     def calc_reward(self, action, ground_ids):
         # living must be better than dying
-        alive = +1.5 if self.body_xyz[2] > 0.3 else -10
+        alive = +1.5 if self.body_xyz[2] > 0.3 and self.body_rpy[0] < 1 else -10
 
         # feet_collision_cost = 0.0
         # for i, f in enumerate(
@@ -81,7 +81,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         #         self.feet_contact[i] = 0.0
 
         electricity_cost = self.electricity_cost * float(np.abs(action).mean())
-            # action * self.joint_speeds).mean())  # let's assume we have DC motor with controller, and reverse current braking
+        # action * self.joint_speeds).mean())  # let's assume we have DC motor with controller, and reverse current braking
         electricity_cost += self.stall_torque_cost * float(np.square(action).mean())
 
         joints_at_limit_cost = float(self.joints_at_limit_cost * self.joints_at_limit)
@@ -95,11 +95,17 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         # print('alive: ' + str(alive))
         # print('electricity_cost: ' + str(electricity_cost))
         # print('joints at limit cost: '+ str(joints_at_limit_cost))
-        return sum(rewards)
+        info = dict(
+            alive_bonus=alive,
+            electricity_cost=electricity_cost,
+            joints_at_limit_cost=joints_at_limit_cost
+        )
+        return sum(rewards), info
 
     def is_alive(self):
         body_height = self.body_xyz[2]
-        if body_height < 0.3:
+        roll, pitch, yaw = self.body_rpy
+        if body_height < 0.3 or roll < 1.0: # prevent flipping and falling down
             return False
         else:
             return True
@@ -111,7 +117,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         full_path = os.path.join(os.path.dirname(__file__), "assets", self.model_urdf)
         print(full_path)
         self.basePosition = (0, 0, 0.5)
-        self.baseOrientation = self._p.getQuaternionFromEuler((math.pi/2, 0, math.pi/2))
+        self.baseOrientation = self._p.getQuaternionFromEuler((math.pi / 2, 0, math.pi / 2))
         self.parts, self.jdict, self.ordered_joints, self.robot_body = self.addToScene(self._p,
                                                                                        self._p.loadURDF(full_path,
                                                                                                         basePosition=self.basePosition,
