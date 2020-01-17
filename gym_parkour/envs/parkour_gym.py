@@ -2,6 +2,7 @@ import pybullet
 import numpy as np
 from pybulletgym.envs.roboschool.envs.env_bases import BaseBulletEnv
 from gym_parkour.envs.humanoid import Humanoid
+from gym_parkour.envs.laikago import Laikago
 from gym_parkour.envs.track_scene import TrackScene
 from gym_parkour.envs.wall_scene import WallScene
 from gym.spaces.dict import Dict
@@ -13,18 +14,22 @@ import time
 class ParkourGym(BaseBulletEnv):
     foot_ground_object_names = {"floor"}  # to distinguish ground and other objects
 
-    def __init__(self, render=False):
+    def __init__(self, render=False, vision=False):
         self.target_position_xy = (15, 0)
-        self.robot = Humanoid(target_position_xy=self.target_position_xy)
+        # self.robot = Humanoid(target_position_xy=self.target_position_xy)
+        self.robot = Laikago(target_position_xy=self.target_position_xy)
         BaseBulletEnv.__init__(self, self.robot, render)
         self.saved_state_id = None
-        self.action_space = Dict()
-        self.observation_space = spaces.Dict({
-            'robot_state': self.robot.observation_space,
-            'camera': spaces.Box(low=0, high=255, shape=(30, 30, 1)),
-        })
+        self.vision = vision
+        # self.action_space = Dict()
+        if vision:
+            self.observation_space = spaces.Dict({
+                'robot_state': self.robot.observation_space,
+                'camera': spaces.Box(low=0, high=255, shape=(30, 30, 1)),
+            })
+        else:
+            self.observation_space = self.robot.observation_space
         self.action_space = self.robot.action_space
-        # self.observation_space = self.robot.observation_space
 
     # Overwrite BaseBulletEnv
     def create_single_player_scene(self, bullet_client):
@@ -103,10 +108,13 @@ class ParkourGym(BaseBulletEnv):
         #     import matplotlib.pyplot as plt
         #     plt.imshow(gray_img, cmap='gray')
         #     plt.show()
-        observation = {
-            'robot_state': robot_state,
-            'camera': gray_img
-        }
+        if self.vision:
+            observation = {
+                'robot_state': robot_state,
+                'camera': gray_img
+            }
+        else:
+            observation = robot_state
 
         return observation
 
