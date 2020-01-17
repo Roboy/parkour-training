@@ -19,7 +19,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         #                        flags=urdfFlags,
         #                        useFixedBase=False)
         ParkourRobot.__init__(self, **kwargs)
-        URDFBasedRobot.__init__(self, 'laikago/laikago_toes.urdf', 'base', action_dim=12, obs_dim=44)
+        URDFBasedRobot.__init__(self, 'laikago/laikago_toes.urdf', 'base', action_dim=12, obs_dim=36)
 
     # overwrite ParkourRobot
     def apply_action(self, a):
