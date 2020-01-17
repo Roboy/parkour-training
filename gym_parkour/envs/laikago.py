@@ -96,9 +96,9 @@ class Laikago(ParkourRobot, URDFBasedRobot):
             joints_at_limit_cost,
             # feet_collision_cost
         ]
-        print('alive: ' + str(alive))
-        print('electricity_cost: ' + str(electricity_cost))
-        print('joints at limit cost: '+ str(joints_at_limit_cost))
+        # print('alive: ' + str(alive))
+        # print('electricity_cost: ' + str(electricity_cost))
+        # print('joints at limit cost: '+ str(joints_at_limit_cost))
         return sum(rewards)
 
     def is_alive(self):
