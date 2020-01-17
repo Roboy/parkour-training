@@ -25,8 +25,9 @@ class Laikago(ParkourRobot, URDFBasedRobot):
     def apply_action(self, a):
         assert (np.isfinite(a).all())
         force_gain = 1
-        for i, m, power in zip(range(12), self.motors, self.motor_power):
-            m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
+        for i, m, motor_range in zip(range(12), self.motors, self.motor_ranges):
+            # m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
+            m.set_position(float(motor_range * np.clip(a[i], -1, +1)))
 
     # overwrite ParkourRobot
     def calc_state(self, target_position_xy):
@@ -68,18 +69,6 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         # living must be better than dying
         alive = +1.5 if self.body_xyz[2] > 0.3 and self.body_rpy[0] > 1 else -10
 
-        # feet_collision_cost = 0.0
-        # for i, f in enumerate(
-        #         self.feet):  # TODO: Maybe calculating feet contacts could be done within the robot code
-        #     contact_ids = set((x[2], x[4]) for x in f.contact_list())
-        #     # print("CONTACT OF '%d' WITH %d" % (contact_ids, ",".join(contact_names)) )
-        #     if ground_ids & contact_ids:
-        #         # see Issue 63: https://github.com/openai/roboschool/issues/63
-        #         # feet_collision_cost += self.foot_collision_cost
-        #         self.feet_contact[i] = 1.0
-        #     else:
-        #         self.feet_contact[i] = 0.0
-
         electricity_cost = self.electricity_cost * float(np.abs(action).mean())
         # action * self.joint_speeds).mean())  # let's assume we have DC motor with controller, and reverse current braking
         electricity_cost += self.stall_torque_cost * float(np.square(action).mean())
@@ -116,7 +105,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
 
         full_path = os.path.join(os.path.dirname(__file__), "assets", self.model_urdf)
         print(full_path)
-        self.basePosition = (0, 0, 0.5)
+        self.basePosition = (0, 0, 1.5)
         self.baseOrientation = self._p.getQuaternionFromEuler((math.pi / 2, 0, math.pi / 2))
         self.parts, self.jdict, self.ordered_joints, self.robot_body = self.addToScene(self._p,
                                                                                        self._p.loadURDF(full_path,
@@ -143,13 +132,13 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         self.initial_z = None
         self.motor_names = ["FR_hip_motor_2_chassis_joint", "FL_hip_motor_2_chassis_joint",
                             "RL_hip_motor_2_chassis_joint", "RR_hip_motor_2_chassis_joint"]
-        self.motor_power = [75, 75, 75, 75]
+        self.motor_ranges = [0.3, 0.3, 0.3, 0.3]
         self.motor_names += ["FR_upper_leg_2_hip_motor_joint", "FL_upper_leg_2_hip_motor_joint",
                              "RL_upper_leg_2_hip_motor_joint", "RR_upper_leg_2_hip_motor_joint"]
-        self.motor_power += [75, 75, 75, 75]
+        self.motor_ranges += [2, 2, 2, 2]
         self.motor_names += ["FR_lower_leg_2_upper_leg_joint", "FL_lower_leg_2_upper_leg_joint",
                              "RL_lower_leg_2_upper_leg_joint", "RR_lower_leg_2_upper_leg_joint"]
-        self.motor_power += [75, 75, 75, 75]
+        self.motor_ranges += [2, 2, 2, 2]
         # self.motor_names += ["jtoeRR", "jtoeRL",
         #                      "jtoeFL", "jtoeFR"]
         # self.motor_power += [10, 10, 10, 10]
