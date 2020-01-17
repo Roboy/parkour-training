@@ -58,8 +58,11 @@ class ParkourGym(BaseBulletEnv):
         return self.get_obs()
 
     def step(self, a):
+        # start = time.time()
         self.robot.apply_action(a)
+        # print('action: ' + str(time.time() - start))
         self.scene.global_step()
+        # print('step: ' + str(time.time() - start))
 
         robot_specific_reward, env_info = self.robot.calc_reward(a, self.ground_ids)
         distance_to_target = np.linalg.norm(np.array(self.robot.get_pos_xyz()[0:2]) - np.array(self.target_position_xy))
@@ -72,7 +75,7 @@ class ParkourGym(BaseBulletEnv):
         reward = robot_specific_reward + velocity_reward
         # print('velocity reward: ' + str(velocity_reward))
         self.last_distance_to_target = copy.copy(distance_to_target)
-
+        # print('time after reward: ' + str(time.time() - start))
         # follow robot with camera
         if self.isRender:
             robot_position = self.robot.body_xyz
@@ -85,36 +88,36 @@ class ParkourGym(BaseBulletEnv):
                          0.95 * curTargetPos[1] + 0.05 * robot_position[1],
                          curTargetPos[2]]
             self._p.resetDebugVisualizerCamera(distance, yaw, pitch, targetPos)
-
         observation = self.get_obs()
+        # print('obs: ' + str(time.time() - start))
         return observation, reward, bool(done), env_info
 
     def get_obs(self):
         robot_state = self.robot.calc_state(self.target_position_xy)
-        base_pos = list(self.robot.get_pos_xyz())
-        base_pos[2] += 0.7
-        view_matrix = self._p.computeViewMatrix(
-            cameraEyePosition=base_pos,  # self.robot.body_xyz + [0, 0, 1],
-            cameraTargetPosition=self.target_position_xy + (1,),
-            cameraUpVector=(1, 0, 1)
-        )
-        proj_matrix = self._p.computeProjectionMatrixFOV(
-            fov=60, aspect=1.0,  # float(self._render_width) / self._render_height,
-            nearVal=0.1, farVal=100.0)
-        (_, _, px, _, _) = self._p.getCameraImage(
-            width=30, height=30, viewMatrix=view_matrix,
-            projectionMatrix=proj_matrix,
-            renderer=pybullet.ER_BULLET_HARDWARE_OPENGL
-        )
-        rgb_array = np.array(px)
-        rgb_array = rgb_array[:, :, :3]
-        gray_img = np.mean(rgb_array, axis=2)
-        # for testing
-        # if random.randint(0, 100) %20 == 0:
-        #     import matplotlib.pyplot as plt
-        #     plt.imshow(gray_img, cmap='gray')
-        #     plt.show()
         if self.vision:
+            base_pos = list(self.robot.get_pos_xyz())
+            base_pos[2] += 0.7
+            view_matrix = self._p.computeViewMatrix(
+                cameraEyePosition=base_pos,  # self.robot.body_xyz + [0, 0, 1],
+                cameraTargetPosition=self.target_position_xy + (1,),
+                cameraUpVector=(1, 0, 1)
+            )
+            proj_matrix = self._p.computeProjectionMatrixFOV(
+                fov=60, aspect=1.0,  # float(self._render_width) / self._render_height,
+                nearVal=0.1, farVal=100.0)
+            (_, _, px, _, _) = self._p.getCameraImage(
+                width=30, height=30, viewMatrix=view_matrix,
+                projectionMatrix=proj_matrix,
+                renderer=pybullet.ER_BULLET_HARDWARE_OPENGL
+            )
+            rgb_array = np.array(px)
+            rgb_array = rgb_array[:, :, :3]
+            gray_img = np.mean(rgb_array, axis=2)
+            # for testing
+            # if random.randint(0, 100) %20 == 0:
+            #     import matplotlib.pyplot as plt
+            #     plt.imshow(gray_img, cmap='gray')
+            #     plt.show()
             observation = {
                 'robot_state': robot_state,
                 'camera': gray_img
