@@ -105,7 +105,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
 
         full_path = os.path.join(os.path.dirname(__file__), "assets", self.model_urdf)
         print(full_path)
-        self.basePosition = (0, 0, 1.5)
+        self.basePosition = (0, 0, 0.5)
         self.baseOrientation = self._p.getQuaternionFromEuler((math.pi / 2, 0, math.pi / 2))
         self.parts, self.jdict, self.ordered_joints, self.robot_body = self.addToScene(self._p,
                                                                                        self._p.loadURDF(full_path,
