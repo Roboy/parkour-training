@@ -19,13 +19,13 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         #                        flags=urdfFlags,
         #                        useFixedBase=False)
         ParkourRobot.__init__(self, **kwargs)
-        URDFBasedRobot.__init__(self, 'laikago/laikago_toes.urdf', 'base', action_dim=16, obs_dim=44)
+        URDFBasedRobot.__init__(self, 'laikago/laikago_toes.urdf', 'base', action_dim=12, obs_dim=44)
 
     # overwrite ParkourRobot
     def apply_action(self, a):
         assert (np.isfinite(a).all())
         force_gain = 1
-        for i, m, power in zip(range(16), self.motors, self.motor_power):
+        for i, m, power in zip(range(12), self.motors, self.motor_power):
             m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
 
     def alive_bonus(self, z, pitch):
@@ -68,7 +68,6 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         return np.clip(np.concatenate([more] + [j] + [self.feet_contact]), -5, +5)
 
     def calc_reward(self, action, ground_ids):
-        # 2 here because 17 joints produce a lot of electricity cost just from policy noise
         # living must be better than dying
         alive = +1 if self.body_xyz[2] > 0.3 else -10
 
@@ -84,8 +83,8 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         #     else:
         #         self.feet_contact[i] = 0.0
 
-        electricity_cost = self.electricity_cost * float(np.abs(
-            action * self.joint_speeds).mean())  # let's assume we have DC motor with controller, and reverse current braking
+        electricity_cost = self.electricity_cost * float(np.abs(action).mean())
+            # action * self.joint_speeds).mean())  # let's assume we have DC motor with controller, and reverse current braking
         electricity_cost += self.stall_torque_cost * float(np.square(action).mean())
 
         joints_at_limit_cost = float(self.joints_at_limit_cost * self.joints_at_limit)
@@ -122,6 +121,13 @@ class Laikago(ParkourRobot, URDFBasedRobot):
                                                                                                         baseOrientation=self.baseOrientation,
                                                                                                         useFixedBase=self.fixed_base,
                                                                                                         flags=pybullet.URDF_USE_SELF_COLLISION))
+        ignored_joints = ['jtoeFL', 'jtoeFR', 'jtoeRR', 'jtoeRL']
+        for ignored_joint in ignored_joints:
+            self.jdict.pop(ignored_joint)
+
+        for j in self.ordered_joints:
+            if j.joint_name in ignored_joints:
+                self.ordered_joints.remove(j)
 
         for j in self.ordered_joints:
             j.reset_current_position(0, 0)
@@ -134,16 +140,16 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         self.initial_z = None
         self.motor_names = ["FR_hip_motor_2_chassis_joint", "FL_hip_motor_2_chassis_joint",
                             "RL_hip_motor_2_chassis_joint", "RR_hip_motor_2_chassis_joint"]
-        self.motor_power = [10, 10, 10, 10]
+        self.motor_power = [75, 75, 75, 75]
         self.motor_names += ["FR_upper_leg_2_hip_motor_joint", "FL_upper_leg_2_hip_motor_joint",
                              "RL_upper_leg_2_hip_motor_joint", "RR_upper_leg_2_hip_motor_joint"]
-        self.motor_power += [10, 10, 10, 10]
+        self.motor_power += [75, 75, 75, 75]
         self.motor_names += ["FR_lower_leg_2_upper_leg_joint", "FL_lower_leg_2_upper_leg_joint",
                              "RL_lower_leg_2_upper_leg_joint", "RR_lower_leg_2_upper_leg_joint"]
-        self.motor_power += [10, 10, 10, 10]
-        self.motor_names += ["jtoeRR", "jtoeRL",
-                             "jtoeFL", "jtoeFR"]
-        self.motor_power += [3, 3, 3, 3]
+        self.motor_power += [75, 75, 75, 75]
+        # self.motor_names += ["jtoeRR", "jtoeRL",
+        #                      "jtoeFL", "jtoeFR"]
+        # self.motor_power += [10, 10, 10, 10]
         self.motors = [self.jdict[n] for n in self.motor_names]
 
     def get_camera_pos(self):
