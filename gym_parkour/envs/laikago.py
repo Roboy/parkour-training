@@ -70,7 +70,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
     def calc_reward(self, action, ground_ids):
         # 2 here because 17 joints produce a lot of electricity cost just from policy noise
         # living must be better than dying
-        alive = +4 if self.body_xyz[2] > 0.78 else -1
+        alive = +1 if self.body_xyz[2] > 0.3 else -10
 
         # feet_collision_cost = 0.0
         # for i, f in enumerate(
@@ -96,6 +96,9 @@ class Laikago(ParkourRobot, URDFBasedRobot):
             joints_at_limit_cost,
             # feet_collision_cost
         ]
+        print('alive: ' + str(alive))
+        print('electricity_cost: ' + str(electricity_cost))
+        print('joints at limit cost: '+ str(joints_at_limit_cost))
         return sum(rewards)
 
     def is_alive(self):

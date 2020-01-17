@@ -65,7 +65,9 @@ class ParkourGym(BaseBulletEnv):
         if distance_to_target < 1 or not self.robot.is_alive():
             done = True
         velocity = self.last_distance_to_target - distance_to_target
-        reward = robot_specific_reward + 3e2 * velocity
+        velocity_reward = 1e2 * velocity
+        reward = robot_specific_reward + velocity_reward
+        print('velocity reward: ' + str(velocity_reward))
         self.last_distance_to_target = copy.copy(distance_to_target)
 
         # follow robot with camera
