@@ -66,7 +66,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
 
     def calc_reward(self, action, ground_ids):
         # living must be better than dying
-        alive = +1.5 if self.body_xyz[2] > 0.3 and self.body_rpy[0] < 1 else -10
+        alive = +1.5 if self.body_xyz[2] > 0.3 and self.body_rpy[0] > 1 else -10
 
         # feet_collision_cost = 0.0
         # for i, f in enumerate(
