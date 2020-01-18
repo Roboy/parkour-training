@@ -98,7 +98,6 @@ class ParkourGym(BaseBulletEnv):
 
     def set_target(self):
         self.target_position_xy = (random.randint(-5, 5), random.randint(-5, 5))
-        print(self.target_position_xy)
         self._p.resetBasePositionAndOrientation(self.target_marker_id, posObj=list(self.target_position_xy) + [1],
                                                 ornObj=(1, 1, 1, 0))
 
