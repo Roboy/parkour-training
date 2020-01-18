@@ -58,7 +58,7 @@ class ParkourGym(BaseBulletEnv):
         return self.get_obs()
 
     def step(self, a):
-        # start = time.time()
+        start = time.time()
         self.robot.apply_action(a)
         # print('action: ' + str(time.time() - start))
         self.scene.global_step()
@@ -93,7 +93,9 @@ class ParkourGym(BaseBulletEnv):
         return observation, reward, bool(done), env_info
 
     def get_obs(self):
-        robot_state = self.robot.calc_state(self.target_position_xy)
+        start = time.time()
+        robot_state = self.robot.calc_state(self.target_position_xy, self.ground_ids)
+        # print('robot state: ' + str(time.time() - start))
         if self.vision:
             base_pos = list(self.robot.get_pos_xyz())
             base_pos[2] += 0.7

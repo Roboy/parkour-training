@@ -77,7 +77,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
                 self.feet_contact[i] = 1.0
             else:
                 self.feet_contact[i] = 0.0
-        print(self.feet_contact)
+        # print(self.feet_contact)
         return np.clip(np.concatenate([more] + [j] + [self.feet_contact]), -5, +5)
 
     def calc_reward(self, action, ground_ids):
