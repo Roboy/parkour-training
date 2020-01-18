@@ -2,6 +2,7 @@ import os
 import pybullet
 import math
 from pybulletgym.envs.roboschool.robots.locomotors.walker_base import WalkerBase
+import copy
 from pybulletgym.envs.roboschool.robots.robot_bases import URDFBasedRobot
 from gym_parkour.envs.parkour_robot import ParkourRobot
 import numpy as np
@@ -20,6 +21,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         #                        useFixedBase=False)
         ParkourRobot.__init__(self, **kwargs)
         URDFBasedRobot.__init__(self, 'laikago/laikago_toes.urdf', 'base', action_dim=16, obs_dim=36)
+        self.last_action = (0,) * 16
 
     # overwrite ParkourRobot
     def apply_action(self, a):
@@ -28,11 +30,12 @@ class Laikago(ParkourRobot, URDFBasedRobot):
                                           jointIndices=range(16),
                                           controlMode=self._p.POSITION_CONTROL,
                                           targetPositions=a,
-                                          forces = (5,) * 16)
+                                          forces=(5,) * 16)
+        self.last_action = a
         # force_gain = 1
         # for i, m, motor_range in zip(range(12), self.motors, self.motor_ranges):
         #     m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
-            # m.set_position(float(motor_range * np.clip(a[i], -1, +1)))
+        # m.set_position(float(motor_range * np.clip(a[i], -1, +1)))
 
     # overwrite ParkourRobot
     def calc_state(self, target_position_xy, ground_ids):
@@ -76,7 +79,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
             else:
                 self.feet_contact[i] = 0.0
         # print(self.feet_contact)
-        return np.clip(np.concatenate([more] + [j] + [self.feet_contact]), -5, +5)
+        return np.clip(np.concatenate([more] + [j] + [self.feet_contact] + [np.array(self.last_action)]), -5, +5)
 
     def calc_reward(self, action, ground_ids):
         # living must be better than dying
@@ -107,7 +110,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
     def is_alive(self):
         body_height = self.body_xyz[2]
         roll, pitch, yaw = self.body_rpy
-        if body_height < 0.3 or roll < 1.0: # prevent flipping and falling down
+        if body_height < 0.3 or roll < 1.0:  # prevent flipping and falling down
             return False
         else:
             return True
