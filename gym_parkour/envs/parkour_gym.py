@@ -101,7 +101,7 @@ class ParkourGym(BaseBulletEnv):
     def set_target(self):
         self.target_position_xy = (random.randint(-5, 5), random.randint(-5, 5))
         self.last_distance_to_target = self.get_distance_to_target()
-        self._p.resetBasePositionAndOrientation(self.target_marker_id, posObj=list(self.target_position_xy) + [1],
+        self._p.resetBasePositionAndOrientation(self.target_marker_id, posObj=list(self.target_position_xy) + [0.2],
                                                 ornObj=(1, 1, 1, 0))
 
     def get_obs(self):
