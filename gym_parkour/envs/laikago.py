@@ -35,7 +35,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
             # m.set_position(float(motor_range * np.clip(a[i], -1, +1)))
 
     # overwrite ParkourRobot
-    def calc_state(self, target_position_xy):
+    def calc_state(self, target_position_xy, ground_ids):
         j = np.array([j.current_relative_position() for j in self.ordered_joints], dtype=np.float32).flatten()
         # even elements [0::2] position, scaled to -1..+1 between limits
         # odd elements  [1::2] angular speed, scaled to show -1..+1
@@ -68,6 +68,16 @@ class Laikago(ParkourRobot, URDFBasedRobot):
                          0.3 * vx, 0.3 * vy, 0.3 * vz,
                          # 0.3 is just scaling typical speed into -1..+1, no physical sense here
                          r, p], dtype=np.float32)
+        for i, f in enumerate(self.feet):
+            contact_ids = set((x[2], x[4]) for x in f.contact_list())
+            # print("CONTACT OF '%d' WITH %d" % (contact_ids, ",".join(contact_names)) )
+            if ground_ids & contact_ids:
+                # see Issue 63: https://github.com/openai/roboschool/issues/63
+                # feet_collision_cost += self.foot_collision_cost
+                self.feet_contact[i] = 1.0
+            else:
+                self.feet_contact[i] = 0.0
+        print(self.feet_contact)
         return np.clip(np.concatenate([more] + [j] + [self.feet_contact]), -5, +5)
 
     def calc_reward(self, action, ground_ids):
