@@ -67,9 +67,7 @@ class ParkourGym(BaseBulletEnv):
 
         robot_specific_reward, env_info = self.robot.calc_reward(a, self.ground_ids)
         distance_to_target = self.get_distance_to_target()
-        done = False
-        if distance_to_target < 1 or not self.robot.is_alive():
-            done = True
+        done = not self.robot.is_alive()
         velocity = self.last_distance_to_target - distance_to_target
         velocity_reward = 1e2 * velocity
         env_info['velocity_reward'] = velocity_reward
