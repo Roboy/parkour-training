@@ -19,15 +19,20 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         #                        flags=urdfFlags,
         #                        useFixedBase=False)
         ParkourRobot.__init__(self, **kwargs)
-        URDFBasedRobot.__init__(self, 'laikago/laikago_toes.urdf', 'base', action_dim=12, obs_dim=36)
+        URDFBasedRobot.__init__(self, 'laikago/laikago_toes.urdf', 'base', action_dim=16, obs_dim=36)
 
     # overwrite ParkourRobot
     def apply_action(self, a):
         assert (np.isfinite(a).all())
-        force_gain = 1
-        for i, m, motor_range in zip(range(12), self.motors, self.motor_ranges):
+        self._p.setJointMotorControlArray(4,
+                                          jointIndices=range(16),
+                                          controlMode=self._p.POSITION_CONTROL,
+                                          targetPositions=a,
+                                          forces = (20,) * 16)
+        # force_gain = 1
+        # for i, m, motor_range in zip(range(12), self.motors, self.motor_ranges):
             # m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
-            m.set_position(float(motor_range * np.clip(a[i], -1, +1)))
+            # m.set_position(float(motor_range * np.clip(a[i], -1, +1)))
 
     # overwrite ParkourRobot
     def calc_state(self, target_position_xy):
