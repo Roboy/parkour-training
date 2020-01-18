@@ -28,7 +28,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
     def apply_action(self, a):
         a = np.array(a)
         assert (np.isfinite(a).all())
-        self._p.setJointMotorControlArray(4,
+        self._p.setJointMotorControlArray(self.robot_body.bodies[self.robot_body.bodyIndex],
                                           jointIndices=range(16),
                                           controlMode=self._p.POSITION_CONTROL,
                                           targetPositions=a,
