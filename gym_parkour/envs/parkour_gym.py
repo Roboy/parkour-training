@@ -72,7 +72,7 @@ class ParkourGym(BaseBulletEnv):
         velocity_reward = 1e2 * velocity
         env_info['velocity_reward'] = velocity_reward
         reward = robot_specific_reward + velocity_reward
-        print('velocity reward: ' + str(velocity_reward))
+        # print('velocity reward: ' + str(velocity_reward))
         self.last_distance_to_target = copy.copy(distance_to_target)
         # print('time after reward: ' + str(time.time() - start))
         # follow robot with camera
