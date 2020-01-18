@@ -28,10 +28,10 @@ class Laikago(ParkourRobot, URDFBasedRobot):
                                           jointIndices=range(16),
                                           controlMode=self._p.POSITION_CONTROL,
                                           targetPositions=a,
-                                          forces = (20,) * 16)
+                                          forces = (10,) * 16)
         # force_gain = 1
         # for i, m, motor_range in zip(range(12), self.motors, self.motor_ranges):
-            # m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
+        #     m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
             # m.set_position(float(motor_range * np.clip(a[i], -1, +1)))
 
     # overwrite ParkourRobot
