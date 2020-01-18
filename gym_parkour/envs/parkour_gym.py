@@ -17,9 +17,8 @@ class ParkourGym(BaseBulletEnv):
     foot_ground_object_names = {"floor"}  # to distinguish ground and other objects
 
     def __init__(self, render=False, vision=False):
-        self.target_position_xy = (15, 0)
         # self.robot = Humanoid(target_position_xy=self.target_position_xy)
-        self.robot = Laikago(target_position_xy=self.target_position_xy)
+        self.robot = Laikago()
         BaseBulletEnv.__init__(self, self.robot, render)
         self.saved_state_id = None
         self.vision = vision
@@ -55,9 +54,9 @@ class ParkourGym(BaseBulletEnv):
             self.target_marker_id = self._p.loadURDF('/home/alex/parkour-training/gym_parkour/envs/assets/target_marker.urdf')
             self.saved_state_id = self._p.saveState()
 
+        self.set_target()
         self.last_distance_to_target = np.linalg.norm(
             np.array(self.robot.get_pos_xyz()[0:2]) - np.array(self.target_position_xy))
-        self.set_target()
         return self.get_obs()
 
     def step(self, a):
@@ -67,7 +66,7 @@ class ParkourGym(BaseBulletEnv):
         # print('step: ' + str(time.time() - start))
 
         robot_specific_reward, env_info = self.robot.calc_reward(a, self.ground_ids)
-        distance_to_target = np.linalg.norm(np.array(self.robot.get_pos_xyz()[0:2]) - np.array(self.target_position_xy))
+        distance_to_target = self.get_distance_to_target()
         done = False
         if distance_to_target < 1 or not self.robot.is_alive():
             done = True
@@ -93,11 +92,20 @@ class ParkourGym(BaseBulletEnv):
         observation = self.get_obs()
         # print('obs: ' + str(time.time() - start))
         if random.randint(0, 100) <= 5:
-            self.target_position_xy = (random.randint(-60, 60), random.randint(-60, 60))
+            self.set_target()
+        # print('velocity reward: ' + str(velocity_reward))
+        # print('reward: ' + str(reward))
+        if reward < -1000:
+            x = 1
         return observation, reward, bool(done), env_info
+
+    def get_distance_to_target(self):
+        return np.linalg.norm(np.array(self.robot.get_pos_xyz()[0:2]) - np.array(self.target_position_xy))
+
 
     def set_target(self):
         self.target_position_xy = (random.randint(-5, 5), random.randint(-5, 5))
+        self.last_distance_to_target = self.get_distance_to_target()
         self._p.resetBasePositionAndOrientation(self.target_marker_id, posObj=list(self.target_position_xy) + [1],
                                                 ornObj=(1, 1, 1, 0))
 

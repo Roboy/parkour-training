@@ -6,8 +6,7 @@ from abc import ABC, abstractmethod
 
 
 class ParkourRobot(ABC):
-    def __init__(self, target_position_xy):
-        self.target_position_xy = target_position_xy
+    def __init__(self):
         power = 0.41
         self.power = power
 

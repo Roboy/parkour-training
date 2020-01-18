@@ -98,8 +98,8 @@ class Humanoid(ParkourRobot, XmlBasedRobot):
         if self.initial_z is None:
             self.initial_z = z
         r, p, yaw = self.body_rpy
-        self.walk_target_theta = np.arctan2(self.target_position_xy[1] - self.body_xyz[1],
-                                            self.target_position_xy[0] - self.body_xyz[0])
+        self.walk_target_theta = np.arctan2(target_position_xy[1] - self.body_xyz[1],
+                                            target_position_xy[0] - self.body_xyz[0])
         angle_to_target = self.walk_target_theta - yaw
 
         rot_speed = np.array(
