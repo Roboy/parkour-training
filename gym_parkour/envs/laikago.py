@@ -20,17 +20,20 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         #                        flags=urdfFlags,
         #                        useFixedBase=False)
         ParkourRobot.__init__(self, **kwargs)
-        URDFBasedRobot.__init__(self, 'laikago/laikago_toes.urdf', 'base', action_dim=16, obs_dim=36)
+        URDFBasedRobot.__init__(self, 'laikago/laikago_toes.urdf', 'base', action_dim=16, obs_dim=52)
         self.last_action = (0,) * 16
+        self.action_difference = 0 # l2 norm between successive actions -> important for position control
 
     # overwrite ParkourRobot
     def apply_action(self, a):
+        a = np.array(a)
         assert (np.isfinite(a).all())
         self._p.setJointMotorControlArray(4,
                                           jointIndices=range(16),
                                           controlMode=self._p.POSITION_CONTROL,
                                           targetPositions=a,
                                           forces=(5,) * 16)
+        self.action_difference = np.linalg.norm(a - self.last_action)
         self.last_action = a
         # force_gain = 1
         # for i, m, motor_range in zip(range(12), self.motors, self.motor_ranges):
@@ -90,16 +93,19 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         # electricity_cost += self.stall_torque_cost * float(np.square(self.joint_speeds).mean())
 
         joints_at_limit_cost = float(self.joints_at_limit_cost * self.joints_at_limit)
+        action_difference_cost = -.1 * self.action_difference
 
         rewards = [
             alive,
             # electricity_cost,
             joints_at_limit_cost,
+            action_difference_cost
             # feet_collision_cost
         ]
         # print('alive: ' + str(alive))
         # print('electricity_cost: ' + str(electricity_cost))
         # print('joints at limit cost: '+ str(joints_at_limit_cost))
+        # print('action difference cost: ' + str(action_difference_cost))
         info = dict(
             alive_bonus=alive,
             # electricity_cost=electricity_cost,
