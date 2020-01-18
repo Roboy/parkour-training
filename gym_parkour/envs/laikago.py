@@ -80,8 +80,8 @@ class Laikago(ParkourRobot, URDFBasedRobot):
 
     def calc_reward(self, action, ground_ids):
         # living must be better than dying
-        alive = +1.5 if self.body_xyz[2] > 0.3 and self.body_rpy[0] > 1 else -10
-
+        # alive = +1.5 if self.body_xyz[2] > 0.3 and self.body_rpy[0] > 1 else -10
+        alive = 0
         # electricity_cost = self.electricity_cost * float(np.abs(action).mean())
         # action * self.joint_speeds).mean())  # let's assume we have DC motor with controller, and reverse current braking
         # electricity_cost += self.stall_torque_cost * float(np.square(self.joint_speeds).mean())
