@@ -28,7 +28,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
                                           jointIndices=range(16),
                                           controlMode=self._p.POSITION_CONTROL,
                                           targetPositions=a,
-                                          forces = (10,) * 16)
+                                          forces = (5,) * 16)
         # force_gain = 1
         # for i, m, motor_range in zip(range(12), self.motors, self.motor_ranges):
         #     m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
@@ -70,10 +70,8 @@ class Laikago(ParkourRobot, URDFBasedRobot):
                          r, p], dtype=np.float32)
         for i, f in enumerate(self.feet):
             contact_ids = set((x[2], x[4]) for x in f.contact_list())
-            # print("CONTACT OF '%d' WITH %d" % (contact_ids, ",".join(contact_names)) )
             if ground_ids & contact_ids:
                 # see Issue 63: https://github.com/openai/roboschool/issues/63
-                # feet_collision_cost += self.foot_collision_cost
                 self.feet_contact[i] = 1.0
             else:
                 self.feet_contact[i] = 0.0
