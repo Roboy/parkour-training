@@ -3,6 +3,7 @@ import numpy as np
 from pybulletgym.envs.roboschool.envs.env_bases import BaseBulletEnv
 from gym_parkour.envs.humanoid import Humanoid
 from gym_parkour.envs.laikago import Laikago
+from gym_parkour.envs.stadium_scene import StadiumScene
 from gym_parkour.envs.track_scene import TrackScene
 from gym_parkour.envs.wall_scene import WallScene
 from gym.spaces.dict import Dict
@@ -34,7 +35,7 @@ class ParkourGym(BaseBulletEnv):
 
     # Overwrite BaseBulletEnv
     def create_single_player_scene(self, bullet_client):
-        self.scene = WallScene(bullet_client, gravity=9.8, timestep=0.0165 / 4, frame_skip=4)
+        self.scene = StadiumScene(bullet_client, gravity=9.8, timestep=0.0165 / 4, frame_skip=4)
         self.scene.zero_at_running_strip_start_line = False
         return self.scene
 
@@ -51,10 +52,12 @@ class ParkourGym(BaseBulletEnv):
             self.ground_ids = set([(self.parts[f].bodies[self.parts[f].bodyIndex], self.parts[f].bodyPartIndex) for f in
                                    self.foot_ground_object_names])
             self._p.configureDebugVisualizer(pybullet.COV_ENABLE_RENDERING, 1)
+            self.target_marker_id = self._p.loadURDF('/home/alex/parkour-training/gym_parkour/envs/assets/target_marker.urdf')
             self.saved_state_id = self._p.saveState()
 
         self.last_distance_to_target = np.linalg.norm(
             np.array(self.robot.get_pos_xyz()[0:2]) - np.array(self.target_position_xy))
+        self.set_target()
         return self.get_obs()
 
     def step(self, a):
@@ -89,7 +92,15 @@ class ParkourGym(BaseBulletEnv):
             self._p.resetDebugVisualizerCamera(distance, yaw, pitch, targetPos)
         observation = self.get_obs()
         # print('obs: ' + str(time.time() - start))
+        if random.randint(0, 100) <= 5:
+            self.target_position_xy = (random.randint(-60, 60), random.randint(-60, 60))
         return observation, reward, bool(done), env_info
+
+    def set_target(self):
+        self.target_position_xy = (random.randint(-5, 5), random.randint(-5, 5))
+        print(self.target_position_xy)
+        self._p.resetBasePositionAndOrientation(self.target_marker_id, posObj=list(self.target_position_xy) + [1],
+                                                ornObj=(1, 1, 1, 0))
 
     def get_obs(self):
         start = time.time()
@@ -107,7 +118,7 @@ class ParkourGym(BaseBulletEnv):
                 fov=60, aspect=1.0,  # float(self._render_width) / self._render_height,
                 nearVal=0.1, farVal=100.0)
             (_, _, px, _, _) = self._p.getCameraImage(
-                width=30, height=30, viewMatrix=view_matrix,
+                width=20, height=20, viewMatrix=view_matrix,
                 projectionMatrix=proj_matrix,
                 renderer=pybullet.ER_BULLET_HARDWARE_OPENGL
             )
@@ -115,10 +126,11 @@ class ParkourGym(BaseBulletEnv):
             rgb_array = rgb_array[:, :, :3]
             gray_img = np.mean(rgb_array, axis=2)
             # for testing
-            # if random.randint(0, 100) %20 == 0:
-            #     import matplotlib.pyplot as plt
-            #     plt.imshow(gray_img, cmap='gray')
-            #     plt.show()
+            if random.randint(0, 100) %20 == 0:
+                import matplotlib.pyplot as plt
+                # plt.imshow(gray_img, cmap='gray')
+                plt.imshow(rgb_array)
+                plt.show()
             observation = {
                 'robot_state': robot_state,
                 'camera': gray_img
