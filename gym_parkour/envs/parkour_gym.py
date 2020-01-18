@@ -91,7 +91,7 @@ class ParkourGym(BaseBulletEnv):
             self._p.resetDebugVisualizerCamera(distance, yaw, pitch, targetPos)
         observation = self.get_obs()
         # print('obs: ' + str(time.time() - start))
-        if random.randint(0, 100) <= 2:
+        if distance_to_target < 0.5:
             self.set_target()
         # print('reward: ' + str(reward))
         return observation, reward, bool(done), env_info
