@@ -109,7 +109,8 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         info = dict(
             alive_bonus=alive,
             # electricity_cost=electricity_cost,
-            joints_at_limit_cost=joints_at_limit_cost
+            joints_at_limit_cost=joints_at_limit_cost,
+            action_difference_cost=action_difference_cost
         )
         return sum(rewards), info
 
