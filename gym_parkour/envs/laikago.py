@@ -55,7 +55,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         # even elements [0::2] position, scaled to -1..+1 between limits
         # odd elements  [1::2] angular speed, scaled to show -1..+1
         self.joint_speeds = j[1::2]
-        self.joints_at_limit = np.count_nonzero(np.abs(j[0::2]) > 0.99)
+        self.joints_at_limit = np.count_nonzero(np.abs(self.positions) > 0.99)
 
         body_pose = self.robot_body.pose()
         parts_xyz = np.array([p.pose().xyz() for p in self.parts.values()]).flatten()
