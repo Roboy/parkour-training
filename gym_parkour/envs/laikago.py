@@ -22,7 +22,10 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         ParkourRobot.__init__(self, **kwargs)
         URDFBasedRobot.__init__(self, 'laikago/laikago_toes.urdf', 'base', action_dim=16, obs_dim=52)
         self.last_action = (0,) * 16
-        self.action_difference = 0 # l2 norm between successive actions -> important for position control
+        self.action_difference = 0  # l2 norm between successive actions -> important for position control
+        self.positions = (0,) * 16
+        self.torques = (0,) * 16
+        self.velocities = (0, ) * 16
 
     # overwrite ParkourRobot
     def apply_action(self, a):
@@ -35,6 +38,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
                                           forces=(5,) * 16)
         self.action_difference = np.linalg.norm(a - self.last_action)
         self.last_action = a
+        self.read_joint_states()
         # force_gain = 1
         # for i, m, motor_range in zip(range(12), self.motors, self.motor_ranges):
         #     m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
@@ -42,7 +46,12 @@ class Laikago(ParkourRobot, URDFBasedRobot):
 
     # overwrite ParkourRobot
     def calc_state(self, target_position_xy, ground_ids):
-        j = np.array([j.current_relative_position() for j in self.ordered_joints], dtype=np.float32).flatten()
+        # j = np.array([j.current_relative_position() for j in self.ordered_joints], dtype=np.float32).flatten()
+        # print(j.shape)
+        # print('j relative: ' + str(j))
+        # print('positions: ' + str(self.positions))
+        j = self.positions + self.velocities
+        # print(len(j))
         # even elements [0::2] position, scaled to -1..+1 between limits
         # odd elements  [1::2] angular speed, scaled to show -1..+1
         self.joint_speeds = j[1::2]
@@ -83,6 +92,14 @@ class Laikago(ParkourRobot, URDFBasedRobot):
                 self.feet_contact[i] = 0.0
         # print(self.feet_contact)
         return np.clip(np.concatenate([more] + [j] + [self.feet_contact] + [np.array(self.last_action)]), -5, +5)
+
+    def read_joint_states(self):
+        joint_states = self._p.getJointStates(
+            bodyUniqueId=self.robot_body.bodies[self.robot_body.bodyIndex],
+            jointIndices=range(16))
+        self.positions = [j_state[0] for j_state in joint_states]
+        self.velocities = [j_state[1] for j_state in joint_states]
+        self.torques = [j_state[3] for j_state in joint_states]
 
     def calc_reward(self, action, ground_ids):
         # living must be better than dying
