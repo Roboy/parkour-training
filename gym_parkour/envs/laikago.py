@@ -20,7 +20,7 @@ class Laikago(ParkourRobot, URDFBasedRobot):
         #                        flags=urdfFlags,
         #                        useFixedBase=False)
         ParkourRobot.__init__(self, **kwargs)
-        URDFBasedRobot.__init__(self, 'laikago/laikago_toes.urdf', 'base', action_dim=16, obs_dim=52)
+        URDFBasedRobot.__init__(self, 'laikago/laikago_toes.urdf', 'base', action_dim=16, obs_dim=60)
         self.last_action = (0,) * 16
         self.action_difference = 0  # l2 norm between successive actions -> important for position control
         self.positions = (0,) * 16
