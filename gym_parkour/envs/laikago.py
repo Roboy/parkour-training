@@ -111,22 +111,26 @@ class Laikago(ParkourRobot, URDFBasedRobot):
 
         joints_at_limit_cost = float(self.joints_at_limit_cost * self.joints_at_limit)
         action_difference_cost = -.1 * self.action_difference
+        torque_cost = -0.01 * np.sum(np.abs(np.array(self.torques)))
 
         rewards = [
             alive,
             # electricity_cost,
             joints_at_limit_cost,
-            action_difference_cost
+            action_difference_cost,
+            torque_cost,
             # feet_collision_cost
         ]
-        # print('alive: ' + str(alive))
+        print('alive: ' + str(alive))
         # print('electricity_cost: ' + str(electricity_cost))
-        # print('joints at limit cost: '+ str(joints_at_limit_cost))
-        # print('action difference cost: ' + str(action_difference_cost))
+        print('joints at limit cost: '+ str(joints_at_limit_cost))
+        print('action difference cost: ' + str(action_difference_cost))
+        print('torque cost: ' + str(torque_cost))
         info = dict(
             alive_bonus=alive,
             # electricity_cost=electricity_cost,
             joints_at_limit_cost=joints_at_limit_cost,
+            torque_cost=torque_cost,
             action_difference_cost=action_difference_cost
         )
         return sum(rewards), info
