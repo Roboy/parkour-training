@@ -16,7 +16,7 @@ import time
 class ParkourGym(BaseBulletEnv):
     foot_ground_object_names = {"floor"}  # to distinguish ground and other objects
 
-    def __init__(self, render=False, vision=False):
+    def __init__(self, render=False, vision=False, max_steps=600):
         # self.robot = Humanoid(target_position_xy=self.target_position_xy)
         self.robot = Laikago()
         BaseBulletEnv.__init__(self, self.robot, render)
@@ -31,6 +31,9 @@ class ParkourGym(BaseBulletEnv):
         else:
             self.observation_space = self.robot.observation_space
         self.action_space = self.robot.action_space
+        self.max_steps = max_steps
+        self.current_step = 0
+
 
     # Overwrite BaseBulletEnv
     def create_single_player_scene(self, bullet_client):
@@ -57,17 +60,19 @@ class ParkourGym(BaseBulletEnv):
         self.set_target()
         self.last_distance_to_target = np.linalg.norm(
             np.array(self.robot.get_pos_xyz()[0:2]) - np.array(self.target_position_xy))
+        self.current_step = 0
         return self.get_obs()
 
     def step(self, a):
         start = time.time()
         self.robot.apply_action(a)
         self.scene.global_step()
+        self.current_step += 1
         # print('step: ' + str(time.time() - start))
 
         robot_specific_reward, env_info = self.robot.calc_reward(a, self.ground_ids)
         distance_to_target = self.get_distance_to_target()
-        done = not self.robot.is_alive()
+        done = (not self.robot.is_alive() or self.current_step > self.max_steps)
         velocity = self.last_distance_to_target - distance_to_target
         velocity_reward = 1e2 * velocity
         env_info['velocity_reward'] = velocity_reward
