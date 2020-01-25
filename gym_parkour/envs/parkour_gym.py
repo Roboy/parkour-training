@@ -54,7 +54,8 @@ class ParkourGym(BaseBulletEnv):
             self.ground_ids = set([(self.parts[f].bodies[self.parts[f].bodyIndex], self.parts[f].bodyPartIndex) for f in
                                    self.foot_ground_object_names])
             self._p.configureDebugVisualizer(pybullet.COV_ENABLE_RENDERING, 1)
-            self.target_marker_id = self._p.loadURDF('/home/alex/parkour-training/gym_parkour/envs/assets/target_marker.urdf')
+            self.target_marker_id = self._p.loadURDF(
+                '/home/alex/parkour-training/gym_parkour/envs/assets/target_marker.urdf')
             self.saved_state_id = self._p.saveState()
 
         self.set_target()
@@ -102,10 +103,13 @@ class ParkourGym(BaseBulletEnv):
     def get_distance_to_target(self):
         return np.linalg.norm(np.array(self.robot.get_pos_xyz()[0:2]) - np.array(self.target_position_xy))
 
-
-    def set_target(self):
-        self.target_position_xy = (random.randint(-5, 5), random.randint(-5, 5))
-        self.last_distance_to_target = self.get_distance_to_target()
+    def set_target(self, new_pos_xy=None):
+        if new_pos_xy is not None:
+            self.target_position_xy = new_pos_xy
+        else:
+            self.target_position_xy = (random.randint(-5, 5), random.randint(-5, 5))
+        self.last_distance_to_target = self.get_distance_to_target()  # make sure there is no abnormal velocity calculated
+        print('setting target: ' + str(self.target_position_xy))
         self._p.resetBasePositionAndOrientation(self.target_marker_id, posObj=list(self.target_position_xy) + [0.2],
                                                 ornObj=(1, 1, 1, 0))
 
@@ -133,7 +137,7 @@ class ParkourGym(BaseBulletEnv):
             rgb_array = rgb_array[:, :, :3]
             gray_img = np.mean(rgb_array, axis=2)
             # for testing
-            if random.randint(0, 100) %20 == 0:
+            if random.randint(0, 100) % 20 == 0:
                 import matplotlib.pyplot as plt
                 # plt.imshow(gray_img, cmap='gray')
                 plt.imshow(rgb_array)
