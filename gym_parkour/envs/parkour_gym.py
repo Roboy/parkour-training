@@ -15,10 +15,10 @@ import time
 
 class ParkourGym(BaseBulletEnv):
     foot_ground_object_names = {"floor"}  # to distinguish ground and other objects
+    target_pos = (21.0, 0)
 
-    def __init__(self, render=False, vision=False, max_steps=600):
-        # self.robot = Humanoid(target_position_xy=self.target_position_xy)
-        self.robot = Laikago()
+    def __init__(self, robot=Humanoid(), render=False, vision=False, max_steps=600):
+        self.robot = robot
         BaseBulletEnv.__init__(self, self.robot, render)
         self.saved_state_id = None
         self.vision = vision
@@ -37,7 +37,7 @@ class ParkourGym(BaseBulletEnv):
 
     # Overwrite BaseBulletEnv
     def create_single_player_scene(self, bullet_client):
-        self.scene = StadiumScene(bullet_client, gravity=9.8, timestep=0.0165 / 4, frame_skip=4)
+        self.scene = TrackScene(bullet_client, gravity=9.8, timestep=0.0165 / 4, frame_skip=4)
         self.scene.zero_at_running_strip_start_line = False
         return self.scene
 
@@ -60,16 +60,14 @@ class ParkourGym(BaseBulletEnv):
 
         self.set_target()
         self.last_distance_to_target = np.linalg.norm(
-            np.array(self.robot.get_pos_xyz()[0:2]) - np.array(self.target_position_xy))
+            np.array(self.robot.get_pos_xyz()[0:2]) - np.array(self.target_pos))
         self.current_step = 0
         return self.get_obs()
 
     def step(self, a):
-        start = time.time()
         self.robot.apply_action(a)
         self.scene.global_step()
         self.current_step += 1
-        # print('step: ' + str(time.time() - start))
 
         robot_specific_reward, env_info = self.robot.calc_reward(a, self.ground_ids)
         distance_to_target = self.get_distance_to_target()
@@ -78,9 +76,7 @@ class ParkourGym(BaseBulletEnv):
         velocity_reward = 1e2 * velocity
         env_info['velocity_reward'] = velocity_reward
         reward = robot_specific_reward + velocity_reward
-        # print('velocity reward: ' + str(velocity_reward))
         self.last_distance_to_target = copy.copy(distance_to_target)
-        # print('time after reward: ' + str(time.time() - start))
         # follow robot with camera
         if self.isRender:
             robot_position = self.robot.body_xyz
@@ -94,35 +90,31 @@ class ParkourGym(BaseBulletEnv):
                          curTargetPos[2]]
             self._p.resetDebugVisualizerCamera(distance, yaw, pitch, targetPos)
         observation = self.get_obs()
-        # print('obs: ' + str(time.time() - start))
         if distance_to_target < 0.5:
             self.set_target()
-        # print('reward: ' + str(reward))
         return observation, reward, bool(done), env_info
 
     def get_distance_to_target(self):
-        return np.linalg.norm(np.array(self.robot.get_pos_xyz()[0:2]) - np.array(self.target_position_xy))
+        return np.linalg.norm(np.array(self.robot.get_pos_xyz()[0:2]) - np.array(self.target_pos))
 
     def set_target(self, new_pos_xy=None):
-        if new_pos_xy is not None:
-            self.target_position_xy = new_pos_xy
-        else:
-            self.target_position_xy = (random.randint(-5, 5), random.randint(-5, 5))
+        # if new_pos_xy is not None:
+        #     self.target_position_xy = new_pos_xy
+        # else:
+        #     self.target_position_xy = (random.randint(-5, 5), random.randint(-5, 5))
         self.last_distance_to_target = self.get_distance_to_target()  # make sure there is no abnormal velocity calculated
-        print('setting target: ' + str(self.target_position_xy))
-        self._p.resetBasePositionAndOrientation(self.target_marker_id, posObj=list(self.target_position_xy) + [0.2],
+        # print('setting target: ' + str(self.target_position_xy))
+        self._p.resetBasePositionAndOrientation(self.target_marker_id, posObj=list(self.target_pos) + [0.2],
                                                 ornObj=(1, 1, 1, 0))
 
     def get_obs(self):
-        start = time.time()
-        robot_state = self.robot.calc_state(self.target_position_xy, self.ground_ids)
-        # print('robot state: ' + str(time.time() - start))
+        robot_state = self.robot.calc_state(self.target_pos, self.ground_ids)
         if self.vision:
             base_pos = list(self.robot.get_pos_xyz())
             base_pos[2] += 0.7
             view_matrix = self._p.computeViewMatrix(
                 cameraEyePosition=base_pos,  # self.robot.body_xyz + [0, 0, 1],
-                cameraTargetPosition=self.target_position_xy + (1,),
+                cameraTargetPosition=self.target_pos+ (1,),
                 cameraUpVector=(1, 0, 1)
             )
             proj_matrix = self._p.computeProjectionMatrixFOV(
@@ -136,12 +128,6 @@ class ParkourGym(BaseBulletEnv):
             rgb_array = np.array(px)
             rgb_array = rgb_array[:, :, :3]
             gray_img = np.mean(rgb_array, axis=2)
-            # for testing
-            if random.randint(0, 100) % 20 == 0:
-                import matplotlib.pyplot as plt
-                # plt.imshow(gray_img, cmap='gray')
-                plt.imshow(rgb_array)
-                plt.show()
             observation = {
                 'robot_state': robot_state,
                 'camera': gray_img

@@ -81,7 +81,7 @@ class Humanoid(ParkourRobot, XmlBasedRobot):
             m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
 
     # overwrite ParkourRobot
-    def calc_state(self, target_position_xy):
+    def calc_state(self, target_position_xy, ground_ids):
         j = np.array([j.current_relative_position() for j in self.ordered_joints], dtype=np.float32).flatten()
         # even elements [0::2] position, scaled to -1..+1 between limits
         # odd elements  [1::2] angular speed, scaled to show -1..+1

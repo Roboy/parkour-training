@@ -20,7 +20,7 @@ class ParkourRobot(ABC):
             j.set_motor_torque(self.power * j.power_coef * float(np.clip(a[n], -1, +1)))
 
     @abstractmethod
-    def calc_state(self):
+    def calc_state(self, target_position, ground_ids):
         # return the robot state. This is what is returned by gym.step as state
         pass
 
