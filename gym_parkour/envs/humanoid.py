@@ -81,7 +81,7 @@ class Humanoid(ParkourRobot, XmlBasedRobot):
             m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
 
     # overwrite ParkourRobot
-    def calc_state(self, target_position_xy):
+    def calc_state(self, target_position_xy, ground_ids):
         j = np.array([j.current_relative_position() for j in self.ordered_joints], dtype=np.float32).flatten()
         # even elements [0::2] position, scaled to -1..+1 between limits
         # odd elements  [1::2] angular speed, scaled to show -1..+1
@@ -98,8 +98,8 @@ class Humanoid(ParkourRobot, XmlBasedRobot):
         if self.initial_z is None:
             self.initial_z = z
         r, p, yaw = self.body_rpy
-        self.walk_target_theta = np.arctan2(self.target_position_xy[1] - self.body_xyz[1],
-                                            self.target_position_xy[0] - self.body_xyz[0])
+        self.walk_target_theta = np.arctan2(target_position_xy[1] - self.body_xyz[1],
+                                            target_position_xy[0] - self.body_xyz[0])
         angle_to_target = self.walk_target_theta - yaw
 
         rot_speed = np.array(
@@ -146,13 +146,29 @@ class Humanoid(ParkourRobot, XmlBasedRobot):
             joints_at_limit_cost,
             feet_collision_cost
         ]
-        return sum(rewards)
+        info = dict(
+            alive_bonus=alive,
+            electricity_cost=electricity_cost,
+            joints_at_limit_cost=joints_at_limit_cost,
+            feet_collision_cost=feet_collision_cost
+        )
+        return sum(rewards), info
 
     # overwrite ParkourRobot
     def is_alive(self):
         body_pitch = self.body_rpy[1]  # not a good predictor
         body_height = self.body_xyz[2]
-        if body_height < 0.5:
+        if body_height < 0.7:
             return False
         else:
             return True
+
+    def get_camera_pos(self):
+        return self.parts['lwaist'].get_pose()
+
+    def get_pos_xyz(self):
+        parts_xyz = np.array([p.pose().xyz() for p in self.parts.values()]).flatten()
+        body_pose = self.robot_body.pose()
+        return(
+            parts_xyz[0::3].mean(), parts_xyz[1::3].mean(),
+            body_pose.xyz()[2])  # torso z is more informative than mean z

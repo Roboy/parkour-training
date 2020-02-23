@@ -12,7 +12,7 @@ class Biped(ParkourRobot, URDFBasedRobot):
 
     def __init__(self, random_yaw=False, random_lean=False, **kwargs):
         ParkourRobot.__init__(self, **kwargs)
-        URDFBasedRobot.__init__(self, 'biped.urdf', 'base', action_dim=14, obs_dim=28)
+        URDFBasedRobot.__init__(self, 'biped.urdf', 'base', action_dim=14, obs_dim=28, basePosition=(0, 0, 1))
         self.random_yaw = random_yaw
         self.random_lean = random_lean
 
@@ -20,14 +20,14 @@ class Biped(ParkourRobot, URDFBasedRobot):
     def apply_action(self, a):
         assert (np.isfinite(a).all())
         force_gain = 1
-        for i, m, power in zip(range(17), self.motors, self.motor_power):
-            m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
+        # for i, m, power in zip(range(17), self.motors, self.motor_power):
+        #     m.set_motor_torque(float(force_gain * power * self.power * np.clip(a[i], -1, +1)))
 
     def alive_bonus(self, z, pitch):
         return +2 if z > 0.78 else -1  # 2 here because 17 joints produce a lot of electricity cost just from policy noise, living must be better than dying
 
     # overwrite ParkourRobot
-    def calc_state(self, target_position_xy):
+    def calc_state(self, target_position_xy, ground_ids):
         j = np.array([j.current_relative_position() for j in self.ordered_joints], dtype=np.float32).flatten()
         # even elements [0::2] position, scaled to -1..+1 between limits
         # odd elements  [1::2] angular speed, scaled to show -1..+1
@@ -79,19 +79,11 @@ class Biped(ParkourRobot, URDFBasedRobot):
             else:
                 self.feet_contact[i] = 0.0
 
-        electricity_cost = self.electricity_cost * float(np.abs(
-            action * self.joint_speeds).mean())  # let's assume we have DC motor with controller, and reverse current braking
-        electricity_cost += self.stall_torque_cost * float(np.square(action).mean())
-
-        joints_at_limit_cost = float(self.joints_at_limit_cost * self.joints_at_limit)
-
         rewards = [
             alive,
-            electricity_cost,
-            joints_at_limit_cost,
             feet_collision_cost
         ]
-        return sum(rewards)
+        return sum(rewards), dict()
 
     def is_alive(self):
         body_pitch = self.body_rpy[1]   # not a good predictor
@@ -122,7 +114,7 @@ class Biped(ParkourRobot, URDFBasedRobot):
                 baseOrientation=self.baseOrientation,
                 useFixedBase=self.fixed_base))
 
-        
+
         self.motor_names = ["right_hip_x", "right_hip_y", "right_hip_z", "left_hip_x", "left_hip_y", "left_hip_z", "right_knee", "left_knee", "right_ankle_x", "right_ankle_y", "right_ankle_z", "left_ankle_x", "left_ankle_y", "left_ankle_z"]
         self.motor_power = [100 for i in range(len(self.motor_names))]
         self.motors = [self.jdict[n] for n in self.motor_names]
@@ -137,4 +129,12 @@ class Biped(ParkourRobot, URDFBasedRobot):
             pass
         self.initial_z = None
 
-        
+    def get_camera_pos(self):
+        pass
+
+    def get_pos_xyz(self):
+        parts_xyz = np.array([p.pose().xyz() for p in self.parts.values()]).flatten()
+        body_pose = self.robot_body.pose()
+        return (
+            parts_xyz[0::3].mean(), parts_xyz[1::3].mean(),
+            body_pose.xyz()[2])  # torso z is more informative than mean z
