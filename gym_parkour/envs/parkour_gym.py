@@ -9,6 +9,7 @@ from gym_parkour.envs.wall_scene import WallScene
 from gym.spaces.dict import Dict
 import gym.spaces as spaces
 import copy
+import os
 
 
 class ParkourGym(BaseBulletEnv):
@@ -52,8 +53,9 @@ class ParkourGym(BaseBulletEnv):
             self.ground_ids = set([(self.parts[f].bodies[self.parts[f].bodyIndex], self.parts[f].bodyPartIndex) for f in
                                    self.foot_ground_object_names])
             self._p.configureDebugVisualizer(pybullet.COV_ENABLE_RENDERING, 1)
-            self.target_marker_id = self._p.loadURDF(
-                '/home/alex/parkour-training/gym_parkour/envs/assets/target_marker.urdf')
+            fname = os.path.join(os.path.dirname(__file__), "assets", "target_marker.urdf")
+            print(fname)
+            self.target_marker_id = self._p.loadURDF(fname)
             self.saved_state_id = self._p.saveState()
 
         self.set_target()
