@@ -158,10 +158,18 @@ class Humanoid(ParkourRobot, XmlBasedRobot):
     def is_alive(self):
         body_pitch = self.body_rpy[1]  # not a good predictor
         body_height = self.body_xyz[2]
-        if body_height < 0.7:
+        if body_height < 0.3:
             return False
         else:
             return True
+
+    def is_onbutt(self):
+        #parts_xyz = np.array([p.pose().xyz() for p in self.parts.values()]).flatten()
+        if self.parts['pelvis'].get_pose()[2] < 0.15:
+            print ("ONBUTT")
+            print (self.parts['pelvis'].get_pose()[2])
+            self.motors[3].set_motor_torque(100)
+            self.motors[7].set_motor_torque(-100)
 
     def get_camera_pos(self):
         return self.parts['lwaist'].get_pose()
