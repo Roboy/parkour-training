@@ -13,21 +13,31 @@ For the simple deployable environment in pybullet-gym, refer to [parkour-trainin
 
 
 # Dependencies and installation
-We use OpenAI Gym, PyBullet, PyBullet Gymperium and BAIR's deep learning library lpyyt for the training and the environment.
+We use OpenAI Gym, PyBullet, PyBullet Gymperium and BAIR's deep learning library rlpyt for the training and the environment.
 
 
 ### Installing pybullet 
-```
+```bash
 pip install pybullet
+```
 
+### Installing OpenAI Gym
+```bash
 git clone https://github.com/openai/gym.git
 cd gym
 pip install -e .
+```
 
+### Installing PyBullet Gymperium
+
+```bash
 git clone https://github.com/benelot/pybullet-gym.git
 cd pybullet-gym
 pip install -e .
+```
 
+### Installing rlpyt
+```bash
 git clone https://github.com/astooke/rlpyt.git
 cd rlpyt
 pip install -e .
@@ -35,22 +45,35 @@ pip install -e .
 ```
 
 ## Installing gym_parkour
+
+And finally, to install the content of this repository you need:
+
 ```bash
 git clone https://github.com/Roboy/parkour-training
 cd parkour-training
 pip install -e .
 ```
 
+# Repository structure 
+
+This repository mainly consist of our primary environment ParkourChallenge-v0, which is implemented, following a hierarchical structure with easily swappable robots and scenes. 
+
+All our robots are based on the ParkourRobot abstract class that you can find in ```gym_parkour/envs/parkour_robot.py```, which demands the implementation of state calculation, actions, updates, reward calculation, etc.  
+
+The canonical robot used for the demo is a basic pybullet humanoid with all the methods and specifications implemented in the ```gym_parkour/envs/humanoid.py```. 
+
+The main environment is implemented in ```gym_parkour/envs/parkour_gym.py``` and follows the BaseBulletEnv specifications from pybullet-gym.
+
+
 ## Examples
-Watch pretrained humanoid failing on the parkour track
+
+For a pre-trained model that used the proximity to the goal as the main reward, we've created a demo, that changes the goal positions to follow the track progression.
+
+You can watch pretrained humanoid running through the parkour track like this:
 ```bash
 cd parkour-training
 python3 enjoy_humanoid
 ```
-
-## Environments
-ParkourChallenge-v0
-
 
 ## Bugs
 pbullet migth throw an error if several environments run in parallel:
