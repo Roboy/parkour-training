@@ -8,13 +8,13 @@
     <visual name='track_visual'>
 
       <geometry>
-        <mesh filename="RoboyParkourChallengeTrack-Simplistic-2019-09-19.stl" scale="0.001 0.001 0.0012">
+        <mesh filename="convex_track.obj" scale="0.2 0.2 0.2">
         </mesh>
       </geometry>
     </visual>
     <collision name='track_collision'>
       <geometry>
-        <mesh filename="RoboyParkourChallengeTrack-Simplistic-2019-09-19.stl" scale="0.001 0.001 0.0012">
+        <mesh filename="convex_track.obj" scale="0.2 0.2 0.2">
         </mesh>
       </geometry>
     </collision>

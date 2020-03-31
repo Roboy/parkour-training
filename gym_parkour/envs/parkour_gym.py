@@ -14,9 +14,11 @@ import os
 
 class ParkourGym(BaseBulletEnv):
     foot_ground_object_names = {"floor"}  # to distinguish ground and other objects
-    target_pos = (21.0, 0)
+    target_pos = (5.5, 0.5)
 
-    def __init__(self, robot=Humanoid(), render=False, vision=False, max_steps=600):
+    target_index = 0
+    targets = [(5.5, 0.5), (6.5, 1.4), (8, 0.5), (10, -0.5), (12, 1), (13, -1.5), (16, -1.5), (18, -0.3), (26, -0.3)]
+    def __init__(self, robot=Humanoid(), render=False, vision=False, max_steps=6000):
         self.robot = robot
         BaseBulletEnv.__init__(self, self.robot, render)
         self.saved_state_id = None
@@ -65,13 +67,21 @@ class ParkourGym(BaseBulletEnv):
         return self.get_obs()
 
     def step(self, a):
+        if not self.robot.is_alive():
+            b = [0, 0, 0, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            #self.robot.apply_action(np.random.random(a.shape) ** 10) 
+            self.robot.apply_action(b) 
+        
+        self.robot.is_onbutt()
+
         self.robot.apply_action(a)
         self.scene.global_step()
         self.current_step += 1
 
         robot_specific_reward, env_info = self.robot.calc_reward(a, self.ground_ids)
         distance_to_target = self.get_distance_to_target()
-        done = (not self.robot.is_alive() or self.current_step > self.max_steps)
+        #done = (not self.robot.is_alive() or self.current_step > self.max_steps)
+        done = False
         velocity = self.last_distance_to_target - distance_to_target
         velocity_reward = 1e2 * velocity
         env_info['velocity_reward'] = velocity_reward
@@ -91,6 +101,9 @@ class ParkourGym(BaseBulletEnv):
             self._p.resetDebugVisualizerCamera(distance, yaw, pitch, targetPos)
         observation = self.get_obs()
         if distance_to_target < 0.5:
+            
+            self.target_index += 1
+            self.target_pos = self.targets[self.target_index]
             self.set_target()
         return observation, reward, bool(done), env_info
 
