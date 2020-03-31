@@ -1,8 +1,12 @@
 # parkour-training
 
-This is one of two main repositories for the parkour project at Roboy. 
+This is one of two main repositories for the parkour project at Roboy. Our initial goal was to provide an environment and initial solution for the [parkour challenge](https://roboy.org/win).
 
-Our  environment, initial training experiments and simple walking demo can be found here. 
+After some time and direction changes, we conctentrated on trying to pass through the bouncy-catle track untill the ramp and after using a simple policy, to experiment with training a motion-capture mimicking solution.
+
+## Repositories and code stucture
+
+Our  environment, initial training experiments and simple walking demo can be found here.
 
 For the advanced experiments with learning motion-capture based and compositional policies, refer to [parkour_learning](https://github.com/Roboy/parkour_learning)
 
